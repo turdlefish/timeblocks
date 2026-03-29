@@ -62,7 +62,7 @@ header {
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 8px 24px;
+  padding: 14px 24px;
   border-bottom: 1px solid var(--border);
   background: var(--surface);
   position: sticky;
@@ -456,11 +456,10 @@ header {
 .ds-ot-modal{position:fixed;inset:0;background:#0008;z-index:700;display:flex;align-items:center;justify-content:center;padding:20px;}
 .ds-ot-box{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:26px;width:320px;max-width:95vw;}
 .ds-ot-box h3{font-size:.9rem;font-weight:700;margin-bottom:14px;color:var(--accent);}
-.ds-bar-layer{position:absolute;inset:0;pointer-events:none;z-index:5;overflow:hidden;}
-.ds-counter-dots{position:absolute;top:3px;left:28px;right:4px;
-  height:22px;display:flex;flex-wrap:wrap;gap:3px;
-  align-items:center;pointer-events:all;z-index:7;}
-.ds-counter-dot{font-size:.75rem;line-height:1;cursor:pointer;transition:transform .1s;}
+.ds-bar-layer{position:absolute;inset:0;pointer-events:none;z-index:5;overflow:visible;}
+.ds-counter-dots{position:absolute;bottom:4px;left:4px;right:4px;
+  display:flex;flex-wrap:wrap;gap:1px;align-items:flex-end;pointer-events:all;z-index:7;}
+.ds-counter-dot{font-size:.6rem;line-height:1;cursor:pointer;transition:transform .1s;}
 .ds-counter-dot:hover{transform:scale(1.2);}
 .ds-counter-add{font-size:.75rem;opacity:.5;cursor:pointer;padding:0 2px;
   border:1px dashed currentColor;border-radius:4px;line-height:1;transition:opacity .15s;}
@@ -489,9 +488,9 @@ header {
 .ds-day-nav-wrap{display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin-left:8px;}
 
 .ds-span-bar{
-  position:absolute; height:18px; border-radius:20px;
-  display:flex; align-items:center; gap:4px;
-  padding:0 7px; font-size:.65rem; font-weight:800;
+  position:absolute; height:24px; border-radius:20px;
+  display:flex; align-items:center; gap:5px;
+  padding:0 10px; font-size:.72rem; font-weight:800;
   white-space:nowrap; pointer-events:all; cursor:default;
   z-index:6; letter-spacing:.04em; text-transform:uppercase;
   border: 1.5px solid currentColor;
@@ -705,6 +704,30 @@ body { display: flex; flex-direction: column; height: 100vh; }
           <button class="add-block-btn" onclick="sbSaveEv()" style="flex:2">＋ Save Event</button>
         </div>
       </div>
+      <!-- Period tracking section — shown in Period tab -->
+      <div class="sidebar-section" id="sidebarPeriod" style="display:none">
+        <h3 style="display:flex;align-items:center;justify-content:space-between">
+          🌸 Period
+          <button id="dpUndoBtn" onclick="dpUndo()" disabled
+            style="font-size:.62rem;background:var(--surface2);border:1px solid var(--border);color:var(--text-muted);padding:3px 10px;border-radius:6px;cursor:pointer;opacity:0.4;transition:all .15s;font-family:inherit"
+            onmouseover="if(!this.disabled)this.style.borderColor='var(--accent)';this.style.color='var(--accent)'"
+            onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-muted)'"
+          >↩ Undo</button>
+        </h3>
+        <div id="dpToolbar"></div>
+      </div>
+      <!-- Mental health section — shown in Mental tab -->
+      <div class="sidebar-section" id="sidebarMental" style="display:none">
+        <h3 style="display:flex;align-items:center;justify-content:space-between">
+          🧠 Wellbeing
+          <button id="dmUndoBtn" onclick="dmUndo()" disabled
+            style="font-size:.62rem;background:var(--surface2);border:1px solid var(--border);color:var(--text-muted);padding:3px 10px;border-radius:6px;cursor:pointer;opacity:0.4;transition:all .15s;font-family:inherit"
+            onmouseover="if(!this.disabled)this.style.borderColor='var(--accent)';this.style.color='var(--accent)'"
+            onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-muted)'"
+          >↩ Undo</button>
+        </h3>
+        <div id="dmToolbar"></div>
+      </div>
       <!-- Day Status section — shown in Status tab -->
       <div class="sidebar-section" id="sidebarDayStatus" style="display:none">
         <h3 style="display:flex;align-items:center;justify-content:space-between">
@@ -718,7 +741,21 @@ body { display: flex; flex-direction: column; height: 100vh; }
           >↩ Undo</button>
         </h3>
         <div id="dsToolbar"></div>
+        <button onclick="showStatusTally()" class="btn-primary" style="margin-top:12px;width:100%;font-size:.72rem;padding:7px 0;">📊 View Tally</button>
       </div>
+      <!-- Status Tally (shown in Status sidebar) -->
+      <div class="sidebar-section" id="sidebarTally" style="display:none;margin-top:8px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <h3 style="margin:0;font-size:.8rem">📊 Status Tally</h3>
+          <div style="display:flex;gap:6px;align-items:center">
+            <select id="dsTallyYrSel2" onchange="dsTallyFull()" style="font-size:.65rem;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:5px;padding:3px 7px;cursor:pointer"></select>
+            <label class="print-opt-toggle" id="dsTallyFY2" onclick="this.classList.toggle('on');dsTallyFull()" style="font-size:.6rem;cursor:pointer;padding:3px 7px">FY</label>
+            <button class="icon-btn" onclick="dsPrintRangeOpen()" style="font-size:.65rem;padding:3px 8px">🖨️</button>
+          </div>
+        </div>
+        <div class="tally-grid" id="dsTallyFull" style="font-size:.75rem"></div>
+      </div>
+
       <!-- Hidden selectors kept for dsTally() compat -->
       <div style="display:none"><select id="dsTallyYrSel"></select><label id="dsTallyFY"></label><div id="dsTally"></div></div>
       <div class="sidebar-section"><h3>Upcoming</h3><div id="cUpList"></div></div>
@@ -727,7 +764,8 @@ body { display: flex; flex-direction: column; height: 100vh; }
   <div class="cal-tabs">
     <button class="cal-tab-btn active" id="calTabCal" onclick="calSwitchTab('cal')">📆 Events</button>
     <button class="cal-tab-btn" id="calTabStatus" onclick="calSwitchTab('status')">📌 Status</button>
-    <button class="cal-tab-btn" id="calTabTally" onclick="calSwitchTab('tally')">📊 Tally</button>
+    <button class="cal-tab-btn" id="calTabPeriod" onclick="calSwitchTab('period')">🌸 Period</button>
+    <button class="cal-tab-btn" id="calTabMental" onclick="calSwitchTab('mental')">🧠 Wellbeing</button>
   </div>
   <div class="cal-tab-panel active" id="calPanelCal">
     <div style="flex:1;display:flex;flex-direction:column;overflow:hidden" id="cMain"></div>
@@ -736,120 +774,13 @@ body { display: flex; flex-direction: column; height: 100vh; }
   <div class="cal-tab-panel" id="calPanelStatus">
     <div style="flex:1;display:flex;flex-direction:column;overflow:hidden" id="cStatusMain"></div>
   </div>
-  <div class="cal-tab-panel" id="calPanelTally">
-    <div class="tally-page">
-      <h2>📅 Status Tally</h2>
-      <div class="tally-controls">
-        <select id="dsTallyYrSel2" onchange="dsTallyFull()" style="font-size:.72rem;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 10px;cursor:pointer"></select>
-        <label class="print-opt-toggle" id="dsTallyFY2" onclick="this.classList.toggle('on');dsTallyFull()" style="font-size:.65rem;cursor:pointer">📅 Financial Year</label>
-        <button class="icon-btn" onclick="dsPrintRangeOpen()" style="font-size:.7rem;padding:5px 12px">🖨️ Print</button>
-      </div>
-      <div class="tally-grid" id="dsTallyFull"></div>
-    </div>
+  <!-- Period tracking panel -->
+  <div class="cal-tab-panel" id="calPanelPeriod">
+    <div style="flex:1;display:flex;flex-direction:column;overflow:hidden" id="cPeriodMain"></div>
   </div>
-</div>
-  </div>
-</div>
-
-<!-- ██ PASTE BACK: DS Modals HTML — lines 1779–1870 ██ -->
-<!-- DS HOURS MODAL -->
-<div class="ds-ot-modal" id="dsHrsModal" style="display:none">
-  <div class="ds-ot-box">
-    <h3 id="dsHrsLabel">Log Hours</h3>
-    <div class="form-row"><label class="print-section-label">Date</label><div id="dsHrsDate" style="font-size:.8rem;color:var(--text-muted);padding:4px 0"></div></div>
-    <div class="form-row"><label class="print-section-label">Hours</label><input class="form-input" id="dsHrsInput" type="number" min="0.5" max="24" step="0.5" value="8" style="width:100%"></div>
-    <div class="modal-btns" style="margin-top:14px">
-      <button class="btn-cancel" style="flex:1" onclick="dsHrsCancel()">Cancel</button>
-      <button class="btn-primary" style="flex:2" onclick="dsHrsSave()">Save</button>
-    </div>
-  </div>
-</div>
-
-<!-- DS OTHER MODAL -->
-<div class="ds-ot-modal" id="dsOtherModal" style="display:none">
-  <div class="ds-ot-box">
-    <h3>❓ Other Status</h3>
-    <div class="form-row"><label class="print-section-label">Date</label><div id="dsOtherDate" style="font-size:.8rem;color:var(--text-muted);padding:4px 0"></div></div>
-    <div style="display:flex;gap:8px;margin-bottom:12px">
-      <div class="form-row" style="flex-shrink:0"><label class="print-section-label">Emoji</label><input class="form-input" id="dsOtherEmoji" type="text" maxlength="4" value="❓" style="font-size:1.4rem;width:56px;text-align:center"></div>
-      <div class="form-row" style="flex:1"><label class="print-section-label">Description</label><input class="form-input" id="dsOtherDesc" type="text" maxlength="40" placeholder="e.g. Training day"></div>
-    </div>
-    <div class="modal-btns">
-      <button class="btn-cancel" style="flex:1" onclick="dsOtherCancel()">Cancel</button>
-      <button class="btn-primary" style="flex:2" onclick="dsOtherSave()">Save</button>
-    </div>
-  </div>
-</div>
-
-<!-- DS CUSTOM STATUS MODAL -->
-<div class="ds-ot-modal" id="dsCustomModal" style="display:none">
-  <div class="ds-ot-box" style="width:360px">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-      <h3 style="margin:0">✨ Custom Statuses</h3>
-      <button onclick="dsCustomClose()" style="background:none;border:none;color:var(--text-muted);font-size:1.2rem;cursor:pointer">✕</button>
-    </div>
-    <div id="dsCustomList" style="margin-bottom:14px;max-height:140px;overflow-y:auto"></div>
-    <div style="border-top:1px solid var(--border);padding-top:12px">
-      <div class="print-section-label" style="margin-bottom:8px">New status</div>
-      <div style="display:flex;gap:6px;margin-bottom:8px">
-        <div class="emoji-keyboard-wrap" style="flex-shrink:0;width:52px">
-          <div class="emoji-trigger" id="dsCustomEmojiTrigger" onclick="openEmojiKeyboard('dsCustomEmoji')" style="padding:7px 6px;justify-content:center">
-            <span class="trigger-icon" id="dsCustomEmojiPreview">🔖</span>
-          </div>
-          <div class="emoji-keyboard" id="dsCustomEmojiEmojiKeyboard"></div>
-        </div>
-        <input class="form-input" id="dsCustomName" type="text" placeholder="Status name" maxlength="24" style="flex:1">
-      </div>
-      <div style="display:none"><input id="dsCustomEmojiLbl"></div>
-      <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px">
-        <label class="print-section-label" style="margin:0">Colour</label>
-        <input type="color" id="dsCustomColor" value="#c8b8ff" style="width:36px;height:28px;border:1px solid var(--border);border-radius:6px;cursor:pointer;padding:2px">
-        <label style="display:flex;align-items:center;gap:6px;font-size:.72rem;color:var(--text-muted);cursor:pointer"><input type="checkbox" id="dsCustomHours"> Track hours</label>
-      </div>
-      <div style="margin-bottom:10px">
-        <div class="print-section-label" style="margin-bottom:6px">Display style</div>
-        <div style="display:flex;gap:6px">
-          <label style="display:flex;align-items:center;gap:5px;font-size:.72rem;color:var(--text-muted);cursor:pointer;padding:5px 10px;border:1px solid var(--border);border-radius:6px;flex:1;justify-content:center" id="dsDisplayBar">
-            <input type="radio" name="dsDisplayMode" value="bar" checked onchange="dsCustomPreviewMode('bar')"> 📋 Bar
-          </label>
-          <label style="display:flex;align-items:center;gap:5px;font-size:.72rem;color:var(--text-muted);cursor:pointer;padding:5px 10px;border:1px solid var(--border);border-radius:6px;flex:1;justify-content:center" id="dsDisplayEmoji">
-            <input type="radio" name="dsDisplayMode" value="emoji" onchange="dsCustomPreviewMode('emoji')"> 😊 Emoji only
-          </label>
-        </div>
-      </div>
-      <div style="margin-bottom:12px">
-        <label style="display:flex;align-items:center;gap:8px;font-size:.72rem;color:var(--text-muted);cursor:pointer;padding:8px 10px;border:1px solid var(--border);border-radius:6px">
-          <input type="checkbox" id="dsCustomCounter"> 🔢 Counter — tap to add multiple per day (e.g. pills, water)
-        </label>
-      </div>
-      <button class="btn-primary" onclick="dsCustomAdd()" style="width:100%">+ Add Status</button>
-    </div>
-  </div>
-</div>
-
-<!-- DS DAY PANEL -->
-<div id="dsDayPanel" style="display:none;position:fixed;inset:0;background:#0008;z-index:650;align-items:center;justify-content:center;padding:20px">
-  <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px;width:380px;max-width:95vw;max-height:85vh;overflow-y:auto">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-      <h2 id="dsDayPanelTitle" style="font-size:.9rem;font-weight:700;color:var(--accent)"></h2>
-      <button onclick="dsDayPanelClose()" style="background:none;border:none;color:var(--text-muted);font-size:1.2rem;cursor:pointer">✕</button>
-    </div>
-    <div style="margin-bottom:14px">
-      <div class="print-section-label" style="margin-bottom:8px">Statuses</div>
-      <div id="dsDayPanelList"></div>
-      <div style="display:flex;gap:6px;margin-top:8px">
-        <select id="dsDayPanelSel" class="form-input" style="flex:1;font-size:.75rem"></select>
-        <button class="btn-primary" onclick="dsDayPanelAdd()" style="flex-shrink:0;padding:6px 14px">+ Add</button>
-      </div>
-    </div>
-    <div style="margin-bottom:14px">
-      <div class="print-section-label" style="margin-bottom:8px">Events</div>
-      <div id="dsDayPanelEvs"></div>
-    </div>
-    <div style="display:flex;gap:8px">
-      <button class="btn-cancel" style="flex:1" onclick="dsDayPanelClose()">Close</button>
-      <button class="btn-primary" style="flex:2" onclick="dsDayPanelClose();if(window.calOpenAdd)calOpenAdd(window.dsDayPanelGetDk2())">+ New Event</button>
-    </div>
+  <!-- Mental health panel -->
+  <div class="cal-tab-panel" id="calPanelMental">
+    <div style="flex:1;display:flex;flex-direction:column;overflow:hidden" id="cMentalMain"></div>
   </div>
 </div>
 
@@ -1247,6 +1178,7 @@ function cMTim(m){return cP2(Math.floor(m/60))+':'+cP2(m%60);}
 
 var cSt={view:'month',y:cNow.getFullYear(),m:cNow.getMonth(),ws:cWkStart(cNow),dd:new Date(cNow),my:cNow.getFullYear(),mm:cNow.getMonth(),events:[],eid:null,icon:'📅',color:'#c8b8ff',ekOpen:false,ckOpen:false,ekTab:0,ekSearch:'',ckTab:0};
 
+window.cSt=cSt;
 var cLj='';
 async function cSave(){try{var j=JSON.stringify(cSt.events);await sbSet(wsKey('cal_events'),j);cLj=j;}catch(e){}}
 async function cLoad(){try{var v=await sbGet(wsKey('cal_events'));if(v){cSt.events=JSON.parse(v);cLj=v;}}catch(e){}}
@@ -1531,7 +1463,10 @@ function dsAllTypes() {
 }
 
 async function dsCustomSave() {
-  try { await sbSet(wsKey('cal_status_custom'), JSON.stringify(ds.custom)); } catch(e) {}
+  var ctx=dsCustomContext||'ds';
+  if(ctx==='dp'){ try{await sbSet(wsKey('cal_period_custom'),JSON.stringify(dp.custom));}catch(e){} }
+  else if(ctx==='dm'){ try{await sbSet(wsKey('cal_mental_custom'),JSON.stringify(dm.custom));}catch(e){} }
+  else { try{await sbSet(wsKey('cal_status_custom'),JSON.stringify(ds.custom));}catch(e){} }
 }
 
 async function dsCustomLoad() {
@@ -1561,13 +1496,19 @@ window.dsCustomOpen = function() {
 
 window.dsCustomClose = function() {
   var m = document.getElementById('dsCustomModal'); if(m) m.style.display='none';
+  var ctx=dsCustomContext||'ds';
+  if(ctx==='dp') dpBuild();
+  else if(ctx==='dm') dmBuild();
+  else { dsBuild(); dsTally(); }
 };
 
 var dsCustomSelectedEmoji = '🔖';
 
 function dsCustomRenderList() {
   var list = document.getElementById('dsCustomList'); if(!list) return;
-  if (!ds.custom.length) { list.innerHTML='<p style="font-size:.7rem;color:var(--text-muted)">No custom statuses yet.</p>'; return; }
+  var ctx=dsCustomContext||'ds';
+  var customs=ctx==='dp'?dp.custom:ctx==='dm'?dm.custom:ds.custom;
+  if (!customs.length) { list.innerHTML='<p style="font-size:.7rem;color:var(--text-muted)">No custom statuses yet.</p>'; return; }
   list.innerHTML = ds.custom.map(function(t, i) {
     return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;padding:6px 8px;background:var(--surface2);border-radius:6px">'
       + '<span style="font-size:1.1rem">' + t.icon + '</span>'
@@ -1581,6 +1522,8 @@ function dsCustomRenderList() {
   }).join('');
 }
 
+var dsCustomContext = 'ds';
+
 window.dsCustomAdd = function() {
   var name = document.getElementById('dsCustomName').value.trim();
   if (!name) { document.getElementById('dsCustomName').focus(); return; }
@@ -1593,14 +1536,20 @@ window.dsCustomAdd = function() {
   var displayMode=modeEl?modeEl.value:'bar';
   var isCounter=document.getElementById('dsCustomCounter').checked;
   if(isCounter) displayMode='emoji'; // counters always use emoji display
-  ds.custom.push({ id:'custom_'+Date.now(), icon:icon, label:name, color:color, tc:tc, hours:hours, displayMode:displayMode, isCounter:isCounter });
+  var entry={id:(dsCustomContext||'ds')+'_c_'+Date.now(),icon:icon,label:name,color:color,tc:tc,hours:hours,displayMode:displayMode,isCounter:isCounter};
+  if(dsCustomContext==='dp') dp.custom.push(entry);
+  else if(dsCustomContext==='dm') dm.custom.push(entry);
+  else ds.custom.push(entry);
   dsCustomSave();
   dsCustomRenderList();
   dsBuild();
 };
 
 window.dsCustomRemove = function(idx) {
-  ds.custom.splice(idx, 1);
+  var ctx=dsCustomContext||'ds';
+  if(ctx==='dp')dp.custom.splice(idx,1);
+  else if(ctx==='dm')dm.custom.splice(idx,1);
+  else ds.custom.splice(idx,1);
   dsCustomSave();
   dsCustomRenderList();
   dsBuild();
@@ -1762,9 +1711,7 @@ function dsRefresh() {
   var statusPanel=document.getElementById('calPanelStatus');
   var isStatusTab=statusPanel&&statusPanel.classList.contains('active');
   if(!isStatusTab&&window.calRa) window.calRa(); // only re-render events cal if not on status tab
-  var tallyPanel=document.getElementById('calPanelTally');
-  if(tallyPanel&&tallyPanel.classList.contains('active')) tmcRenderAll();
-  if(isStatusTab) setTimeout(sCalRender,50);
+  if(isStatusTab) setTimeout(sCalRender, 50); // re-render status cal
 }
 
 window.dsAfterRender=function(){
@@ -1774,11 +1721,12 @@ window.dsAfterRender=function(){
 };
 
 function dsInject() {
-  // Only run on events tab — status tab has its own injection in sCalRender
+  // Don't inject status into events tab
   var evPanel=document.getElementById('calPanelCal');
-  if(!evPanel||!evPanel.classList.contains('active')) return;
+  if(evPanel&&evPanel.classList.contains('active')) return;
 
-  var main=document.getElementById('cMain');
+  var main=document.getElementById('cStatusMain');
+  if(!main||!main.closest('#calPanelStatus')) main=document.getElementById('cMain');
   if(!main) return;
   var view=window.calSt?window.calSt.view:'month';
 
@@ -2169,28 +2117,33 @@ function dsMiniCal() {
     var dn=i-sd+1,v=dn>=1&&dn<=l.getDate();
     var dk2=v?y+'-'+String(m+1).padStart(2,'0')+'-'+String(dn).padStart(2,'0'):'';
     var isToday=v&&dk2===tk;
-    var sArr=v?dsGetDay(dk2):[];
-    // Filter out counter/emoji-only for background tint (use first bar-type)
+    var _tab=(document.querySelector('.cal-tab-btn.active')||{}).id||'';
+    var _gd=_tab==='calTabPeriod'?dpGetDay:_tab==='calTabMental'?dmGetDay:dsGetDay;
+    var _at=_tab==='calTabPeriod'?dpAllTypes:_tab==='calTabMental'?dmAllTypes:dsAllTypes;
+    var _act=_tab==='calTabPeriod'?dp.active:_tab==='calTabMental'?dm.active:ds.active;
+    var sArr=v?_gd(dk2):[];
     var barArr=sArr.filter(function(s){
-      var tt=dsAllTypes().find(function(x){return x.id===s.type;});
+      var tt=_at().find(function(x){return x.id===s.type;});
       return tt&&!tt.isCounter&&tt.displayMode!=='emoji';
     });
     var s=barArr.length?barArr[0]:null;
-    var t=s?dsAllTypes().find(function(x){return x.id===s.type;}):null;
-    // Colour dots — one per non-counter status
+    var t=s?_at().find(function(x){return x.id===s.type;}):null;
     var dots=barArr.slice(0,3).map(function(sx){
-      var tx=dsAllTypes().find(function(x){return x.id===sx.type;}); if(!tx) return '';
+      var tx=_at().find(function(x){return x.id===sx.type;}); if(!tx) return '';
       return '<span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:'+tx.color+'"></span>';
     }).join('');
     var dotsHtml=dots?'<span style="position:absolute;bottom:1px;left:50%;transform:translateX(-50%);display:flex;gap:1px">'+dots+'</span>':'';
     h+='<div class="mini-cal-day'+(v?'':' other-month')+(isToday?' today':'')+'"'
-      +(v?' onclick="dsMiniClick(\''+dk2+'\')" style="position:relative;'+(ds.active?'cursor:crosshair;':'')+(t?'background:color-mix(in srgb,'+t.color+' 18%,var(--surface))':'')+'"':'')
+      +(v?' onclick="dsMiniClick(\''+dk2+'\')" style="position:relative;'+(_act?'cursor:crosshair;':'')+(t?'background:color-mix(in srgb,'+t.color+' 18%,var(--surface))':'')+'"':'')
       +'>'+dotsHtml+(v?dn:'')+'</div>';
   }
   el.innerHTML=h+'</div>';
 }
 window.dsMiniNav=function(d){dsMiniM+=d;if(dsMiniM<0){dsMiniM=11;dsMiniY--;}if(dsMiniM>11){dsMiniM=0;dsMiniY++;}dsMiniCal();};
 window.dsMiniClick=function(dk2){
+  var _t=(document.querySelector('.cal-tab-btn.active')||{}).id||'';
+  if(_t==='calTabPeriod'&&dp.active){dpApply(dk2);return;}
+  if(_t==='calTabMental'&&dm.active){dmApply(dk2);return;}
   if(ds.active){dsApply(dk2);return;}
   if(window.cGoDay) window.cGoDay(dk2);
 };
@@ -2430,7 +2383,7 @@ function sCalRender(){
     +'<button class="cal-arr" onclick="sCalNav(-1)">&#9664;</button>'
     +'<button class="cal-arr" onclick="sCalNav(1)">&#9654;</button>'
     +'<div class="cal-title">'+title+'</div>'
-    +'<div class="pill-group" style="margin-left:auto">'+'<button class="pill-btn active" onclick="sCalNav(0)">Today</button>'+'</div>'
+    +'<button class="cal-arr" onclick="sCalNav(0)" style="margin-left:auto;font-size:.7rem;padding:4px 10px">Today</button>'
     +'</div>'
     +'<div class="cal-mwrap">'
     +'<div class="cal-m-dr">'
@@ -2522,7 +2475,7 @@ function sCalRender(){
         else{sg2.end=dk;sg2.endCell=cell;}
       });
       if(sg2) segs.push(sg2);
-      var BAR_H=18,BAR_GAP=2,BAR_TOP=26;
+      var BAR_H=24,BAR_GAP=3,BAR_TOP=28;
       segs.forEach(function(sg,si){
         var r1=sg.startCell.getBoundingClientRect(),r2=sg.endCell.getBoundingClientRect();
         var slot=stackCount[sg.start]||0;
@@ -2624,6 +2577,440 @@ window.cStNav=function(d){
   cRStatus();
 };
 
+
+// ════════════════════════════════════════════════════════
+// TRACKER FACTORY — shared logic for period and mental health trackers
+// ════════════════════════════════════════════════════════
+
+// ── Period tracker data store ──
+var dp = {
+  data: {},    // { 'YYYY-MM-DD': [{type, hrs?, desc?}, ...] }
+  active: null,
+  pending: null,
+  loaded: false,
+  saved: '',
+  custom: [],
+  history: []
+};
+
+var DP_TYPES = [
+  { id:'dp_period',    icon:'🩸', label:'Period',      color:'#ff6b8a', tc:'#8b0000', hours:false, displayMode:'emoji' },
+  { id:'dp_spotting',  icon:'🔴', label:'Spotting',    color:'#ffb3c1', tc:'#8b0000', hours:false, displayMode:'emoji' },
+  { id:'dp_ovulation', icon:'🥚', label:'Ovulation',   color:'#ffe066', tc:'#7a6000', hours:false, displayMode:'emoji' },
+  { id:'dp_pms',       icon:'😤', label:'PMS',         color:'#c8b8ff', tc:'#4a0080', hours:false, displayMode:'emoji' },
+  { id:'dp_cramps',    icon:'😣', label:'Cramps',      color:'#ff9f6e', tc:'#7a2800', hours:false, displayMode:'emoji' },
+  { id:'dp_headache',  icon:'🤕', label:'Headache',    color:'#ffcba4', tc:'#6b3000', hours:false, displayMode:'emoji' },
+  { id:'dp_bloating',  icon:'🫧', label:'Bloating',    color:'#b8e0ff', tc:'#00457a', hours:false, displayMode:'emoji' },
+  { id:'dp_mood_high', icon:'😊', label:'Good mood',   color:'#b8ffcc', tc:'#005c1e', hours:false, displayMode:'emoji' },
+  { id:'dp_mood_low',  icon:'😔', label:'Low mood',    color:'#d4d4f5', tc:'#3a3a7a', hours:false, displayMode:'emoji' },
+];
+function dpAllTypes(){ return DP_TYPES.concat(dp.custom); }
+function dpGetDay(dk2){ var v=dp.data[dk2]; if(!v) return []; return Array.isArray(v)?v:[v]; }
+function dpSetDay(dk2,arr){ if(!arr||!arr.length) delete dp.data[dk2]; else dp.data[dk2]=arr; }
+function dpSnap(){ dp.history.push(JSON.stringify(dp.data)); if(dp.history.length>50) dp.history.shift(); var btn=document.getElementById('dpUndoBtn'); if(btn){btn.disabled=false;btn.style.opacity='1';} }
+window.dpUndo=function(){ if(!dp.history.length) return; dp.data=JSON.parse(dp.history.pop()); var btn=document.getElementById('dpUndoBtn'); if(btn){btn.disabled=!dp.history.length;btn.style.opacity=dp.history.length?'1':'0.4';} dpSave(); pCalRender(); dpTallyRender(); };
+async function dpSave(){ try{ var j=JSON.stringify(dp.data); await sbSet(wsKey('cal_period'),j); dp.saved=j; }catch(e){} }
+async function dpLoad(){ try{ var v=await sbGet(wsKey('cal_period')); if(v){var raw=JSON.parse(v);Object.keys(raw).forEach(function(k){if(raw[k]&&!Array.isArray(raw[k]))raw[k]=[raw[k]];});dp.data=raw;dp.saved=v;} }catch(e){} dp.loaded=true; dpBuild(); }
+window.dpSelect=function(id){ dp.active=dp.active===id?null:id; dpBuild(); document.querySelectorAll('#cPeriodMain .cal-m-cell:not(.cal-oth)').forEach(function(c){c.style.cursor=dp.active?'crosshair':'';});};
+window.dpDeleteStatus=function(dk2,typeId){ dpSnap(); var arr=dpGetDay(dk2).filter(function(s){return s.type!==typeId;}); dpSetDay(dk2,arr); dpSave(); pCalRender(); dpTallyRender(); };
+window.dpApply=function(dk2){ if(!dp.active)return; dpSnap(); var arr=dpGetDay(dk2); var idx=arr.findIndex(function(x){return x.type===dp.active;}); if(idx>=0)arr.splice(idx,1); else arr.push({type:dp.active}); dpSetDay(dk2,arr); dpSave(); pCalRender(); dpTallyRender(); };
+
+function dpBuild(){
+  var el=document.getElementById('dpToolbar'); if(!el) return;
+  el.innerHTML='<div style="font-size:.62rem;color:var(--text-muted);margin-bottom:8px">Select a status then click a day to stamp it.</div>'
+    +dpAllTypes().map(function(t){
+      var on=dp.active===t.id;
+      return '<button class="ds-btn'+(on?' ds-active':'')+'" onclick="dpSelect(\''+t.id+'\')\" style="border-color:'+(on?t.color:'')+';">'
+        +'<span class="ds-icon">'+t.icon+'</span>'
+        +'<span class="ds-name">'+t.label+'</span>'
+        +(on?'<span style="color:'+t.color+';font-size:.8rem">✓</span>':'')
+        +'</button>';
+    }).join('');
+  var _b=document.getElementById('dpToolbar');
+  if(_b){var _btn=document.createElement('button');_btn.className='ds-btn';
+    _btn.style.cssText='border-style:dashed;margin-top:4px';
+    _btn.innerHTML='<span class="ds-icon">+</span><span class="ds-name">Add custom</span>';
+    _btn.onclick=function(){dsCustomContext='dp';if(window.dsCustomOpen)window.dsCustomOpen();};
+    _b.appendChild(_btn);}
+}
+
+// ── Mental health tracker data store ──
+var dm = {
+  data: {},
+  active: null,
+  pending: null,
+  loaded: false,
+  saved: '',
+  custom: [],
+  history: []
+};
+
+var DM_TYPES = [
+  { id:'dm_great',    icon:'🌟', label:'Great',         color:'#ffe066', tc:'#7a6000', hours:false, displayMode:'emoji' },
+  { id:'dm_good',     icon:'😊', label:'Good',          color:'#b8ffcc', tc:'#005c1e', hours:false, displayMode:'emoji' },
+  { id:'dm_okay',     icon:'😐', label:'Okay',          color:'#c8e6ff', tc:'#1a4d7a', hours:false, displayMode:'emoji' },
+  { id:'dm_low',      icon:'😔', label:'Low',           color:'#d4d4f5', tc:'#3a3a7a', hours:false, displayMode:'emoji' },
+  { id:'dm_anxious',  icon:'😰', label:'Anxious',       color:'#ffe4b3', tc:'#7a4000', hours:false, displayMode:'emoji' },
+  { id:'dm_stressed', icon:'😤', label:'Stressed',      color:'#ffb3c1', tc:'#7a0030', hours:false, displayMode:'emoji' },
+  { id:'dm_sad',      icon:'😢', label:'Sad',           color:'#c8b8ff', tc:'#4a0080', hours:false, displayMode:'emoji' },
+  { id:'dm_angry',    icon:'😠', label:'Angry',         color:'#ff9f6e', tc:'#7a2800', hours:false, displayMode:'emoji' },
+  { id:'dm_therapy',  icon:'💬', label:'Therapy',       color:'#6effb8', tc:'#004a2a', hours:false, displayMode:'emoji' },
+  { id:'dm_exercise', icon:'🏃', label:'Exercise',      color:'#6ec8ff', tc:'#004a7a', hours:false, displayMode:'emoji' },
+  { id:'dm_meditate', icon:'🧘', label:'Meditated',     color:'#f0b8ff', tc:'#5a007a', hours:false, displayMode:'emoji' },
+  { id:'dm_social',   icon:'🤝', label:'Social',        color:'#ffea99', tc:'#5a4a00', hours:false, displayMode:'emoji' },
+];
+function dmAllTypes(){ return DM_TYPES.concat(dm.custom); }
+function dmGetDay(dk2){ var v=dm.data[dk2]; if(!v) return []; return Array.isArray(v)?v:[v]; }
+function dmSetDay(dk2,arr){ if(!arr||!arr.length) delete dm.data[dk2]; else dm.data[dk2]=arr; }
+function dmSnap(){ dm.history.push(JSON.stringify(dm.data)); if(dm.history.length>50) dm.history.shift(); var btn=document.getElementById('dmUndoBtn'); if(btn){btn.disabled=false;btn.style.opacity='1';} }
+window.dmUndo=function(){ if(!dm.history.length) return; dm.data=JSON.parse(dm.history.pop()); var btn=document.getElementById('dmUndoBtn'); if(btn){btn.disabled=!dm.history.length;btn.style.opacity=dm.history.length?'1':'0.4';} dmSave(); mCalRender(); dmTallyRender(); };
+async function dmSave(){ try{ var j=JSON.stringify(dm.data); await sbSet(wsKey('cal_mental'),j); dm.saved=j; }catch(e){} }
+async function dmLoad(){ try{ var v=await sbGet(wsKey('cal_mental')); if(v){var raw=JSON.parse(v);Object.keys(raw).forEach(function(k){if(raw[k]&&!Array.isArray(raw[k]))raw[k]=[raw[k]];});dm.data=raw;dm.saved=v;} }catch(e){} dm.loaded=true; dmBuild(); }
+window.dmSelect=function(id){ dm.active=dm.active===id?null:id; dmBuild(); document.querySelectorAll('#cMentalMain .cal-m-cell:not(.cal-oth)').forEach(function(c){c.style.cursor=dm.active?'crosshair':'';});};
+window.dmDeleteStatus=function(dk2,typeId){ dmSnap(); var arr=dmGetDay(dk2).filter(function(s){return s.type!==typeId;}); dmSetDay(dk2,arr); dmSave(); mCalRender(); dmTallyRender(); };
+window.dmApply=function(dk2){ if(!dm.active)return; dmSnap(); var arr=dmGetDay(dk2); var idx=arr.findIndex(function(x){return x.type===dm.active;}); if(idx>=0)arr.splice(idx,1); else arr.push({type:dm.active}); dmSetDay(dk2,arr); dmSave(); mCalRender(); dmTallyRender(); };
+
+function dmBuild(){
+  var el=document.getElementById('dmToolbar'); if(!el) return;
+  el.innerHTML='<div style="font-size:.62rem;color:var(--text-muted);margin-bottom:8px">Select a status then click a day to stamp it.</div>'
+    +dmAllTypes().map(function(t){
+      var on=dm.active===t.id;
+      return '<button class="ds-btn'+(on?' ds-active':'')+'" onclick="dmSelect(\''+t.id+'\')\" style="border-color:'+(on?t.color:'')+';">'
+        +'<span class="ds-icon">'+t.icon+'</span>'
+        +'<span class="ds-name">'+t.label+'</span>'
+        +(on?'<span style="color:'+t.color+';font-size:.8rem">✓</span>':'')
+        +'</button>';
+    }).join('');
+  var _b2=document.getElementById('dmToolbar');
+  if(_b2){var _btn2=document.createElement('button');_btn2.className='ds-btn';
+    _btn2.style.cssText='border-style:dashed;margin-top:4px';
+    _btn2.innerHTML='<span class="ds-icon">+</span><span class="ds-name">Add custom</span>';
+    _btn2.onclick=function(){dsCustomContext='dm';if(window.dsCustomOpen)window.dsCustomOpen();};
+    _b2.appendChild(_btn2);}
+}
+
+// ── Shared calendar renderer factory ──
+// Creates a render function for period/mental health calendars
+function makeTrackerCal(cfg){
+  // cfg = { mainId, stateObj, navFn, allTypesFn, getDay, deleteStatusFn, renderFn }
+  return function(){
+    var M=document.getElementById(cfg.mainId); if(!M) return;
+    var y=cfg.stateObj.y, m=cfg.stateObj.m;
+    var f=new Date(y,m,1),l=new Date(y,m+1,0);
+    var sd=(f.getDay()+6)%7,tot=Math.ceil((sd+l.getDate())/7)*7;
+    var now=new Date();
+    var tk=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+    var title=f.toLocaleString('default',{month:'long',year:'numeric'});
+
+    var h='<div class="cal-nav">'
+      +'<button class="cal-arr" onclick="'+cfg.navFn+'(-1)">&#9664;</button>'
+      +'<button class="cal-arr" onclick="'+cfg.navFn+'(1)">&#9654;</button>'
+      +'<div class="cal-title">'+title+'</div>'
+      +'<div class="pill-group" style="margin-left:auto"><button class="pill-btn active" onclick="'+cfg.navFn+'(0)">Today</button></div>'
+      +'</div>'
+      +'<div class="cal-mwrap"><div class="cal-m-dr">'
+      +['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(function(d){return'<div class="cal-m-dh">'+d+'</div>';}).join('')
+      +'</div><div class="cal-m-grid" data-apply-fn="'+cfg.applyFn+'" data-popup="'+(cfg.usePopup?'1':'')+'">';
+
+    for(var i=0;i<tot;i++){
+      var dn=i-sd+1,v=dn>=1&&dn<=l.getDate();
+      var dk2=v?y+'-'+String(m+1).padStart(2,'0')+'-'+String(dn).padStart(2,'0'):'';
+      var isToday=v&&dk2===tk;
+      var wk=Math.ceil((sd+dn)/7);
+      var active=cfg.stateObj.active;
+      h+='<div class="cal-m-cell'+(v?'':' cal-oth')+(isToday?' cal-tod':'')+'"'
+        +(v?' data-dk="'+dk2+'" onclick="(function(el){var g=el.closest(\'.cal-m-grid\');if(!g)return;var fn=g.dataset.applyFn;if(g.dataset.popup&&window.trDayOpen&&window._trCfg_&&fn&&window._trCfg_[fn]){window.trDayOpen(el.dataset.dk,window._trCfg_[fn]);}else if(fn&&window[fn])window[fn](el.dataset.dk);})(this)" style="'+(active?'cursor:crosshair':'')+'"':'')
+        +'>'
+        +'<div class="cal-m-num">'+(v?dn:'')+'</div>'
+        +(v&&i%7===0?'<div class="cal-m-wk">W'+wk+'</div>':'')
+        +'</div>';
+    }
+    h+='</div></div>';
+    M.innerHTML=h;
+
+    // Inject bars
+    var cells=Array.from(M.querySelectorAll('.cal-m-cell:not(.cal-oth)'));
+    var grid=M.querySelector('.cal-m-grid'); if(!grid) return;
+    var dateMap={}, stackCount={};
+    cells.forEach(function(c,idx2){
+      // cells is already filtered to valid days, so idx2+1 = day number
+      var dn2=idx2+1;
+      var dk=y+'-'+String(m+1).padStart(2,'0')+'-'+String(dn2).padStart(2,'0');
+      dateMap[dk]=c; c._trDate=dk;
+      c.style.cursor=cfg.stateObj.active?'crosshair':'';
+    });
+    var allDates=Object.keys(dateMap).sort();
+    var oldLayer=grid.querySelector('.ds-bar-layer'); if(oldLayer) oldLayer.remove();
+    var layer=document.createElement('div'); layer.className='ds-bar-layer'; grid.appendChild(layer);
+    if(typeof fitMonthGrid==='function') fitMonthGrid(grid);
+    var gridRect=grid.getBoundingClientRect();
+
+    cfg.allTypesFn().forEach(function(typeObj){
+      if(typeObj.isCounter||typeObj.displayMode==='emoji') return;
+      var tid=typeObj.id;
+      var typeDates=allDates.filter(function(dk){return cfg.getDay(dk).some(function(s){return s.type===tid;});});
+      if(!typeDates.length) return;
+      var ri=0;
+      while(ri<typeDates.length){
+        var run=[typeDates[ri]]; var rj=ri+1;
+        while(rj<typeDates.length){
+          var pp=new Date(typeDates[rj-1]+'T00:00:00'),nn=new Date(typeDates[rj]+'T00:00:00');
+          if((nn-pp)/86400000!==1) break;
+          run.push(typeDates[rj]); rj++;
+        }
+        var s0=cfg.getDay(run[0]).find(function(s){return s.type===tid;})||{};
+        var t=typeObj, extraText=s0.hrs?' '+s0.hrs+'h':'';
+        var segs=[],sg2=null;
+        run.forEach(function(dk){
+          var cell=dateMap[dk]; if(!cell) return;
+          var col=cells.indexOf(cell)%7;
+          if(!sg2||col===0){if(sg2)segs.push(sg2);sg2={start:dk,end:dk,startCell:cell,endCell:cell};}
+          else{sg2.end=dk;sg2.endCell=cell;}
+        });
+        if(sg2) segs.push(sg2);
+        var BAR_H=18,BAR_GAP=2,BAR_TOP=26;
+        segs.forEach(function(sg,si){
+          var r1=sg.startCell.getBoundingClientRect(),r2=sg.endCell.getBoundingClientRect();
+          var slot=stackCount[sg.start]||0;
+          var d=new Date(sg.start+'T00:00:00'),de=new Date(sg.end+'T00:00:00');
+          while(d<=de){var dkk=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');stackCount[dkk]=(stackCount[dkk]||0)+1;d.setDate(d.getDate()+1);}
+          var bar=document.createElement('div'); bar.className='ds-span-bar';
+          bar.style.cssText='top:'+(r1.top-gridRect.top+BAR_TOP+(slot*(BAR_H+BAR_GAP)))+'px;left:'+(r1.left-gridRect.left+1)+'px;width:'+(r2.right-gridRect.left-r1.left+gridRect.left-2)+'px;height:'+BAR_H+'px;color:'+t.color+';position:absolute;';
+          var delDates=run.join(',');
+          bar.dataset.delDates=delDates;
+          bar.dataset.delTid=tid;
+          bar.dataset.delFn=cfg.deleteStatusFn;
+          bar.dataset.renderFn=cfg.renderFn;
+          bar.innerHTML=(si===0?'<span class="ds-span-icon">'+t.icon+'</span><span class="ds-span-label">'+t.label+extraText+'</span>':'<span class="ds-span-icon">'+t.icon+'</span>')
+            +'<button class="ds-bar-del" title="Remove" onclick="event.stopPropagation();trackerBarDel(this)">×</button>';          layer.appendChild(bar);
+        });
+        ri=rj;
+      }
+    });
+    fitMonthGrid(grid);
+
+    // Emoji-only types: show as large emoji icons at top of cell
+    cells.forEach(function(cell){
+      var dk=cell._trDate; if(!dk) return;
+      cell.querySelectorAll('.tr-emoji-row').forEach(function(e){e.remove();});
+      var emojiSts=cfg.getDay(dk).filter(function(s){
+        var t=cfg.allTypesFn().find(function(x){return x.id===s.type;});
+        return t&&(t.displayMode==='emoji'||t.isCounter);
+      });
+      if(!emojiSts.length) return;
+      var row=document.createElement('div');
+      row.className='tr-emoji-row';
+      row.style.cssText='display:flex;flex-wrap:wrap;gap:2px;padding:0 3px 3px;position:absolute;bottom:4px;left:0;right:0;justify-content:flex-start;pointer-events:none;z-index:3;';
+      emojiSts.forEach(function(s){
+        var t=cfg.allTypesFn().find(function(x){return x.id===s.type;}); if(!t) return;
+        var span=document.createElement('span');
+        span.style.cssText='font-size:1rem;line-height:1;filter:drop-shadow(0 1px 1px #0003);';
+        span.textContent=t.icon;
+        span.title=t.label;
+        row.appendChild(span);
+      });
+      cell.appendChild(row);
+    });
+  };
+}
+
+
+// ── Tracker Day Popup ──
+var _trDayDk = null;     // current date key
+var _trDayCfg = null;    // {getDay, setDay, allTypesFn, saveF, renderF}
+
+window.trDayOpen = function(dk, cfg) {
+  _trDayDk = dk; _trDayCfg = cfg;
+  var existingArr = cfg.getDay(dk);
+  var _sel = {};
+  existingArr.forEach(function(s){ if(s.type!=='__note__') _sel[s.type]=true; });
+  var d = new Date(dk+'T00:00:00');
+  document.getElementById('trDayTitle').textContent = d.toLocaleDateString('default',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  var typesEl = document.getElementById('trDayTypes');
+  typesEl.innerHTML = '';
+  cfg.allTypesFn().forEach(function(t) {
+    if(t.id==='__note__') return;
+    var btn = document.createElement('button');
+    function paint(on){
+      btn.style.cssText='font-size:1.6rem;display:flex;flex-direction:column;align-items:center;'
+        +'min-width:64px;border:2.5px solid;border-radius:12px;padding:8px 10px;cursor:pointer;transition:all .15s;'
+        +'background:'+(on?'color-mix(in srgb,'+t.color+' 22%,var(--surface))':'var(--surface)')+';'
+        +'border-color:'+(on?t.color:'var(--border)')+';'
+        +'box-shadow:'+(on?'0 0 0 1px '+t.color:'none')+';';
+    }
+    paint(!!_sel[t.id]);
+    btn.innerHTML='<span>'+t.icon+'</span><span style="font-size:.52rem;font-weight:700;color:var(--text-muted);margin-top:3px;white-space:nowrap;max-width:60px;overflow:hidden;text-overflow:ellipsis;">'+t.label+'</span>';
+    btn.onclick=function(e){e.preventDefault();_sel[t.id]=!_sel[t.id];paint(!!_sel[t.id]);};
+    typesEl.appendChild(btn);
+  });
+  var noteEntry = existingArr.find(function(s){return s.type==='__note__';});
+  document.getElementById('trDayNote').value = noteEntry?noteEntry.note:'';
+  document.getElementById('trDayPopup')._sel = _sel;
+  document.getElementById('trDayPopup').style.display = 'flex';
+};
+
+function _trDayCommit(){
+  if(!_trDayDk||!_trDayCfg) return;
+  var _sel = (document.getElementById('trDayPopup'))||{};
+  _sel = _sel._sel||{};
+  var note = document.getElementById('trDayNote').value.trim();
+  var newArr = [];
+  _trDayCfg.allTypesFn().forEach(function(t){
+    if(_sel[t.id]) newArr.push({type:t.id});
+  });
+  if(note) newArr.push({type:'__note__',note:note});
+  _trDayCfg.setDay(_trDayDk, newArr);
+  _trDayCfg.saveF();
+  _trDayCfg.renderF();
+}
+
+window.trDaySave = function() {
+  _trDayCommit();
+  document.getElementById('trDayPopup').style.display='none';
+  _trDayDk=null; _trDayCfg=null;
+};
+
+window.trDayClose = function() {
+  _trDayCommit();
+  document.getElementById('trDayPopup').style.display='none';
+  _trDayDk=null; _trDayCfg=null;
+};
+
+
+// Tracker popup config registry: maps applyFn name -> cfg for popup
+window._trCfg_ = {};
+// ── Period calendar ──
+var pCalState={y:new Date().getFullYear(),m:new Date().getMonth()};
+var pCalRender=makeTrackerCal({
+  mainId:'cPeriodMain', stateObj:pCalState,
+  navFn:'pCalNav', applyFn:'dpApply',
+  allTypesFn:dpAllTypes, getDay:dpGetDay, deleteStatusFn:'dpDeleteStatus', renderFn:'pCalRender',
+  usePopup:true
+});
+// Register period popup config
+window._trCfg_['dpApply'] = {
+  getDay: dpGetDay, setDay: dpSetDay, allTypesFn: dpAllTypes,
+  saveF: dpSave, renderF: function(){ pCalRender(); setTimeout(dsMiniCal,20); }
+};
+
+window.pCalNav=function(dir){
+  if(dir===0){pCalState.y=new Date().getFullYear();pCalState.m=new Date().getMonth();}
+  else{pCalState.m+=dir;if(pCalState.m<0){pCalState.m=11;pCalState.y--;}if(pCalState.m>11){pCalState.m=0;pCalState.y++;}}
+  pCalRender(); setTimeout(dsMiniCal,20);
+};
+
+// ── Mental health calendar ──
+var mCalState={y:new Date().getFullYear(),m:new Date().getMonth()};
+var mCalRender=makeTrackerCal({
+  mainId:'cMentalMain', stateObj:mCalState,
+  navFn:'mCalNav', applyFn:'dmApply',
+  allTypesFn:dmAllTypes, getDay:dmGetDay, deleteStatusFn:'dmDeleteStatus', renderFn:'mCalRender',
+  usePopup:true
+});
+// Register mental popup config
+window._trCfg_['dmApply'] = {
+  getDay: dmGetDay, setDay: dmSetDay, allTypesFn: dmAllTypes,
+  saveF: dmSave, renderF: function(){ mCalRender(); setTimeout(dsMiniCal,20); }
+};
+
+window.mCalNav=function(dir){
+  if(dir===0){mCalState.y=new Date().getFullYear();mCalState.m=new Date().getMonth();}
+  else{mCalState.m+=dir;if(mCalState.m<0){mCalState.m=11;mCalState.y--;}if(mCalState.m>11){mCalState.m=0;mCalState.y++;}}
+  mCalRender(); setTimeout(dsMiniCal,20);
+};
+
+// ── Tally functions ──
+function makeTallyRender(allTypesFn, getData, elId){
+  return function(){
+    var el=document.getElementById(elId); if(!el) return;
+    var yrSel=document.getElementById('dsTallyYrSel2');
+    var year=yrSel?parseInt(yrSel.value):new Date().getFullYear();
+    var useFY=document.getElementById('dsTallyFY2')&&document.getElementById('dsTallyFY2').classList.contains('on');
+    var allTypes=allTypesFn(); var counts={},hrs={};
+    allTypes.forEach(function(t){counts[t.id]=0;hrs[t.id]=0;});
+    Object.keys(getData()).forEach(function(dk2){
+      var d=new Date(dk2),inRange;
+      if(useFY) inRange=d>=new Date(year-1,6,1)&&d<=new Date(year,5,30);
+      else inRange=dk2.startsWith(String(year)+'-');
+      if(!inRange) return;
+      (Array.isArray(getData()[dk2])?getData()[dk2]:[getData()[dk2]]).forEach(function(s){
+        if(!s) return;
+        counts[s.type]=(counts[s.type]||0)+1;
+        var t=allTypes.find(function(x){return x.id===s.type;});
+        if(t&&t.hours) hrs[s.type]=(hrs[s.type]||0)+(s.hrs||8);
+      });
+    });
+    var types=allTypes.filter(function(t){return counts[t.id]>0;});
+    if(!types.length){el.innerHTML='<p style="color:var(--text-muted);font-size:.8rem">Nothing recorded yet.</p>';return;}
+    el.innerHTML=types.map(function(t){
+      var hrsText=hrs[t.id]>0?hrs[t.id]+' hours total':'';
+      return '<div class="tally-card" style="border-left:4px solid '+t.color+'">'
+        +'<div class="tally-card-icon">'+t.icon+'</div>'
+        +'<div class="tally-card-info"><div class="tally-card-label">'+t.label+'</div>'
+        +(hrsText?'<div class="tally-card-sub">'+hrsText+'</div>':'')+'</div>'
+        +'<div style="text-align:right"><div class="tally-card-count">'+counts[t.id]+'</div>'
+        +'<div class="tally-card-hrs">days</div></div>'
+        +'</div>';
+    }).join('');
+  };
+}
+
+var dpTallyRender=makeTallyRender(dpAllTypes,function(){return dp.data;},'dpTallyFull');
+var dmTallyRender=makeTallyRender(dmAllTypes,function(){return dm.data;},'dmTallyFull');
+
+// ── Per-tracker print range openers ──
+function makeTrackerPrintOpen(fyId, fromId, toId, modalId){
+  return function(){
+    var yr=new Date().getFullYear();
+    var useFY=document.getElementById(fyId)&&document.getElementById(fyId).classList.contains('on');
+    var fromEl=document.getElementById(fromId), toEl=document.getElementById(toId);
+    if(useFY){if(fromEl)fromEl.value=(yr-1)+'-07-01';if(toEl)toEl.value=yr+'-06-30';}
+    else{if(fromEl)fromEl.value=yr+'-01-01';if(toEl)toEl.value=yr+'-12-31';}
+    document.getElementById(modalId).style.display='flex';
+  };
+}
+window.dpPrintRangeOpen=makeTrackerPrintOpen('dsTallyFY2','dsPRFrom','dsPRTo','dsPrintRangeModal');
+window.dmPrintRangeOpen=makeTrackerPrintOpen('dsTallyFY2','dsPRFrom','dsPRTo','dsPrintRangeModal');
+
+// ── Combined print ──
+window.tallyCombinedPrint=function(){
+  var yr=new Date().getFullYear();
+  var useFY=document.getElementById('dsTallyFY2')&&document.getElementById('dsTallyFY2').classList.contains('on');
+  var fromDate=useFY?(yr-1)+'-07-01':yr+'-01-01';
+  var toDate=useFY?yr+'-06-30':yr+'-12-31';
+  var period=useFY?'Financial Year '+(yr-1)+'/'+yr:'Year '+yr;
+  function buildRows(allTypesFn, dataObj){
+    var allTypes=allTypesFn(), counts={};
+    allTypes.forEach(function(t){counts[t.id]=0;});
+    Object.keys(dataObj).forEach(function(dk2){
+      if(dk2<fromDate||dk2>toDate) return;
+      (Array.isArray(dataObj[dk2])?dataObj[dk2]:[dataObj[dk2]]).forEach(function(s){
+        if(s&&counts[s.type]!==undefined) counts[s.type]++;
+      });
+    });
+    return allTypes.filter(function(t){return counts[t.id]>0;})
+      .map(function(t){return '<tr><td>'+t.icon+' '+t.label+'</td><td>'+counts[t.id]+' days</td></tr>';}).join('');
+  }
+  var statusRows=buildRows(dsAllTypes,ds.data);
+  var periodRows=buildRows(dpAllTypes,dp.data);
+  var mentalRows=buildRows(dmAllTypes,dm.data);
+  var win=window.open('','_blank'); if(!win) return;
+  win.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Tally — '+period+'</title>'
+    +'<style>body{font-family:"Inter",system-ui,sans-serif;padding:40px;color:#1a1a2e;max-width:700px;margin:0 auto}'
+    +'h1{font-size:1.3rem;margin-bottom:4px}h2{font-size:1rem;margin:24px 0 8px;border-bottom:2px solid #1a1a2e;padding-bottom:4px}'
+    +'p{color:#888;font-size:.85rem;margin-bottom:16px}table{width:100%;border-collapse:collapse;margin-bottom:8px}'
+    +'td{padding:8px 12px;border-bottom:1px solid #e0ddd8;font-size:.9rem}'
+    +'.btn{position:fixed;top:16px;right:16px;background:#7c5cbf;color:#fff;border:none;border-radius:8px;padding:10px 18px;font-family:sans-serif;font-size:13px;font-weight:700;cursor:pointer}'
+    +'@media print{.btn{display:none}}</style></head><body>'
+    +'<button class="btn" onclick="window.print()">🖨️ Print</button>'
+    +'<h1>📊 Tally</h1><p>'+period+'</p>'
+    +(statusRows?'<h2>📌 Status</h2><table>'+statusRows+'</table>':'')
+    +(periodRows?'<h2>🌸 Period</h2><table>'+periodRows+'</table>':'')
+    +(mentalRows?'<h2>🧠 Wellbeing</h2><table>'+mentalRows+'</table>':'')
+    +'</body></html>');
+  win.document.close();
+};
+
 // ── Fit month grid to available height ──
 function fitMonthGrid(gridId){
   var grid=(typeof gridId==='string')?document.getElementById(gridId):gridId;
@@ -2632,66 +3019,82 @@ function fitMonthGrid(gridId){
   var wrap=grid.closest('.cal-mwrap'); if(!wrap) return;
   var dr=wrap.querySelector('.cal-m-dr');
   var drH=dr?dr.offsetHeight:32;
-  // Measure from the tab panel for reliable height (works for non-initial panels)
-  var panel=grid.closest('.cal-tab-panel')||grid.closest('[id$="Main"]');
-  var panelH=panel?panel.clientHeight:wrap.offsetHeight;
-  // Subtract nav bar height
-  var nav=panel?panel.querySelector('.cal-nav'):null;
-  var navH=nav?nav.offsetHeight:44;
-  // Subtract cal-tabs bar (only in main panel area, not in the grid)
-  var tabsEl=document.querySelector('.cal-tabs');
-  var tabsH=tabsEl?tabsEl.offsetHeight:0;
-  // available = panel height - tabs - nav - day-of-week headers
-  var available=panelH-navH-drH;
-  if(available<100) return;
-  // Count rows in grid (cells / 7)
+  var navEl=wrap.previousElementSibling; // .cal-nav is sibling of .cal-mwrap
+  var navH=navEl?navEl.offsetHeight:44;
   var cells=grid.children.length;
   var rows=Math.ceil(cells/7);
   if(!rows) return;
-  var rowH=Math.max(90, Math.floor(available/rows));
+  var headerEl=document.querySelector('header:first-of-type');
+  var tabsEl=document.querySelector('.cal-tabs');
+  var topH=(headerEl?headerEl.offsetHeight:50)+(tabsEl?tabsEl.offsetHeight:36);
+  var available=window.innerHeight-topH-navH-drH-4;
+  if(available<100) return;
+  var rowH=Math.floor(available/rows);
+  if(rowH<80) rowH=80;
   grid.style.gridTemplateRows='repeat('+rows+','+rowH+'px)';
 }
 
 function fitAllMonthGrids(){
-  // Fit the active calendar
-  var evPanel=document.getElementById('calPanelCal');
-  var stPanel=document.getElementById('calPanelStatus');
-  if(evPanel&&evPanel.classList.contains('active')){
-    var g=evPanel.querySelector('.cal-m-grid'); if(g) fitMonthGrid(g);
-  }
-  if(stPanel&&stPanel.classList.contains('active')){
-    var g2=stPanel.querySelector('.cal-m-grid'); if(g2) fitMonthGrid(g2);
-  }
+  ['calPanelCal','calPanelStatus','calPanelPeriod','calPanelMental'].forEach(function(pid){
+    var p=document.getElementById(pid);
+    if(p&&p.classList.contains('active')){
+      var g=p.querySelector('.cal-m-grid'); if(g) fitMonthGrid(g);
+    }
+  });
 }
 // ── Calendar main tab switcher ──
 window.calSwitchTab=function(tab){
-  ['cal','status','tally'].forEach(function(t){
+  ['cal','status','period','mental'].forEach(function(t){
     var btn=document.getElementById('calTab'+t.charAt(0).toUpperCase()+t.slice(1));
     var panel=document.getElementById('calPanel'+t.charAt(0).toUpperCase()+t.slice(1));
     if(btn) btn.classList.toggle('active',t===tab);
     if(panel) panel.classList.toggle('active',t===tab);
   });
-  if(tab==='tally'){ dsTallyFull(); dsInitTallyYrSel(); }
   if(tab==='status'){
-    // Small delay so panel layout settles before measuring
-    setTimeout(function(){
-      sCalRender();
-      // Re-fit after render in case first measurement was off
-      setTimeout(fitAllMonthGrids, 50);
-    }, 30);
+    setTimeout(function(){ sCalRender(); setTimeout(fitAllMonthGrids,50); }, 30);
+  }
+  if(tab==='period'){
+    setTimeout(function(){ pCalRender(); setTimeout(fitAllMonthGrids,50); }, 30);
+  }
+  if(tab==='mental'){
+    setTimeout(function(){ mCalRender(); setTimeout(fitAllMonthGrids,50); }, 30);
   }
   if(tab==='cal'){
     document.querySelectorAll('#cMain .cal-m-cell').forEach(function(c){ c.style.cursor=''; });
     var ae=document.getElementById('sidebarAddEvent'); if(ae) ae.style.display='';
-    var ds2=document.getElementById('sidebarDayStatus'); if(ds2) ds2.style.display='none';
+    ['sidebarDayStatus','sidebarPeriod','sidebarMental'].forEach(function(id){
+      var el=document.getElementById(id); if(el) el.style.display='none';
+    });
     if(typeof sbClearEv==='function') sbClearEv();
   }
-  if(tab==='status'||tab==='tally'){
+  if(tab!=='cal'){
     var ae2=document.getElementById('sidebarAddEvent'); if(ae2) ae2.style.display='none';
-    var ds3=document.getElementById('sidebarDayStatus'); if(ds3) ds3.style.display=tab==='status'?'':'none';
+    var ds2=document.getElementById('sidebarDayStatus'); if(ds2) ds2.style.display=tab==='status'?'':'none';
+    var dp2=document.getElementById('sidebarPeriod');    if(dp2) dp2.style.display=tab==='period'?'':'none';
+    var dm2=document.getElementById('sidebarMental');    if(dm2) dm2.style.display=tab==='mental'?'':'none';
+    // Hide tally when leaving status tab
+    if(tab!=='status'){var st2=document.getElementById('sidebarTally');if(st2)st2.style.display='none';}
   }
+  setTimeout(dsMiniCal,20);
 };
 
+function allTallyRender(){
+  dsTallyFull();
+  dpTallyRender();
+  dmTallyRender();
+}
+
+
+window.dsSidebarToggleTally = function() {
+  var t = document.getElementById('sidebarTally');
+  if (!t) return;
+  var showing = t.style.display !== 'none';
+  t.style.display = showing ? 'none' : '';
+  if (!showing) {
+    dsTallyFull();
+    dsInitTallyYrSel();
+  }
+};
 function dsInitTallyYrSel(){
   var sel=document.getElementById('dsTallyYrSel2'); if(!sel||sel.options.length) return;
   var yr=new Date().getFullYear();
@@ -2737,6 +3140,44 @@ function dsTallyFull(){
       +'</div>';
   }).join('');
 }
+
+window.showStatusTally=function(){
+  var sel=document.getElementById('stYrSel');
+  if(sel&&!sel.options.length){var yr=new Date().getFullYear();for(var y=yr+1;y>=yr-5;y--){var o=document.createElement('option');o.value=y;o.textContent=y;if(y===yr)o.selected=true;sel.appendChild(o);}}
+  renderStatusTally();
+  document.getElementById('statusTallyModal').style.display='flex';
+};
+
+window.renderStatusTally=function(){
+  var el=document.getElementById('stTallyGrid'); if(!el) return;
+  var yrSel=document.getElementById('stYrSel');
+  var year=yrSel?parseInt(yrSel.value):new Date().getFullYear();
+  var useFY=document.getElementById('stFY')&&document.getElementById('stFY').classList.contains('on');
+  var allTypes=dsAllTypes(); var counts={},hrs={};
+  allTypes.forEach(function(t){counts[t.id]=0;hrs[t.id]=0;});
+  Object.keys(ds.data).forEach(function(dk){
+    var d=new Date(dk),inRange;
+    if(useFY) inRange=d>=new Date(year-1,6,1)&&d<=new Date(year,5,30);
+    else inRange=dk.startsWith(String(year)+'-');
+    if(!inRange) return;
+    dsGetDay(dk).forEach(function(s){
+      var t=allTypes.find(function(x){return x.id===s.type;}); if(!t||t.isCounter||t.displayMode==='emoji') return;
+      counts[s.type]=(counts[s.type]||0)+1;
+      if(t.hours) hrs[s.type]=(hrs[s.type]||0)+(s.hrs||DS_DEFAULT_HRS);
+    });
+  });
+  var types=allTypes.filter(function(t){return !t.isCounter&&t.displayMode!=='emoji'&&counts[t.id]>0;});
+  if(!types.length){el.innerHTML='<p style="color:var(--text-muted);font-size:.8rem">No statuses recorded.</p>';return;}
+  el.innerHTML=types.map(function(t){
+    var hrsText=hrs[t.id]>0?hrs[t.id]+' hours total':'';
+    return '<div class="tally-card" style="border-left:4px solid '+t.color+'">'
+      +'<div class="tally-card-icon">'+t.icon+'</div>'
+      +'<div class="tally-card-info"><div class="tally-card-label">'+t.label+'</div>'
+      +(hrsText?'<div class="tally-card-sub">'+hrsText+'</div>':'')+'</div>'
+      +'<div style="text-align:right"><div class="tally-card-count">'+counts[t.id]+'</div>'
+      +'<div class="tally-card-hrs">days</div></div></div>';
+  }).join('');
+};
 // ══════════════════════════════════════════
 // INIT — Working Copy Bootstrap
 // ══════════════════════════════════════════
@@ -2772,6 +3213,8 @@ async function initCalendarWorkingCopy() {
   // Load data (awaited so everything is ready before user can click)
   try { if (typeof cLoad === 'function') await cLoad(); } catch(e) { console.warn('cLoad error', e); }
   try { if (typeof dsLoad === 'function') await dsLoad(); } catch(e) { console.warn('dsLoad error', e); }
+  try { if (typeof dpLoad === 'function') await dpLoad(); } catch(e) { console.warn('dpLoad error', e); }
+  try { if (typeof dmLoad === 'function') await dmLoad(); } catch(e) { console.warn('dmLoad error', e); }
 
   // Render everything
   if (window.calRa) window.calRa();
@@ -2817,8 +3260,46 @@ if (_panel) {
 document.addEventListener('DOMContentLoaded', initCalendarWorkingCopy);
 if (document.readyState !== 'loading') initCalendarWorkingCopy();
 window.addEventListener('resize', function(){
-  fitAllMonthGrids();
+  setTimeout(fitAllMonthGrids,50);
+  // Also re-render status cal if active to force grid refit
+  var stPanel=document.getElementById('calPanelStatus');
+  if(stPanel&&stPanel.classList.contains('active')) setTimeout(sCalRender,60);
 });
 </script>
+
+<!-- Tracker Day Popup (period/wellbeing) -->
+<div id="trDayPopup" style="display:none;position:fixed;inset:0;background:#0008;z-index:700;align-items:center;justify-content:center;padding:16px;">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:22px;width:420px;max-width:95vw;max-height:88vh;overflow-y:auto;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+      <h2 id="trDayTitle" style="font-size:1rem;font-weight:700;color:var(--accent);margin:0;font-family:'Fraunces',serif;"></h2>
+      <button onclick="trDayClose()" style="background:none;border:none;color:var(--text-muted);font-size:1.3rem;cursor:pointer;line-height:1;">✕</button>
+    </div>
+    <div id="trDayTypes" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;"></div>
+    <div>
+      <label style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-muted);display:block;margin-bottom:6px;">Notes</label>
+      <textarea id="trDayNote" rows="3" class="form-input" placeholder="Add notes for this day…" style="resize:vertical;width:100%;box-sizing:border-box;"></textarea>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:14px;">
+      <button class="btn-cancel" onclick="trDayClose()" style="flex:1;">Close</button>
+      <button class="btn-primary" onclick="trDaySave()" style="flex:2;">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Status Tally Modal -->
+<div id="statusTallyModal" style="display:none;position:fixed;inset:0;background:#0008;z-index:700;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;width:500px;max-width:95vw;max-height:88vh;overflow-y:auto;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <h2 style="font-size:1rem;font-weight:700;color:var(--accent);margin:0;font-family:'Fraunces',serif;">📊 Status Tally</h2>
+      <button onclick="document.getElementById('statusTallyModal').style.display='none'" style="background:none;border:none;color:var(--text-muted);font-size:1.3rem;cursor:pointer;">✕</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
+      <select id="stYrSel" onchange="renderStatusTally()" style="font-size:.72rem;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 10px;cursor:pointer"></select>
+      <label class="print-opt-toggle" id="stFY" onclick="this.classList.toggle('on');renderStatusTally()" style="font-size:.65rem;cursor:pointer">📅 Financial Year</label>
+      <button class="icon-btn" onclick="dsPrintRangeOpen()" style="font-size:.7rem;padding:5px 12px;margin-left:auto;">🖨️ Print</button>
+    </div>
+    <div class="tally-grid" id="stTallyGrid"></div>
+  </div>
+</div>
 </body>
 </html>
