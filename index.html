@@ -332,7 +332,7 @@ header {
 .cal-m-dr{display:grid;grid-template-columns:repeat(7,1fr);position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--border);}
 .cal-m-dh{text-align:center;padding:8px 4px;font-size:.64rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1.5px;}
 .cal-m-grid{display:grid;grid-template-columns:repeat(7,1fr);min-width:500px;}
-.cal-m-cell{min-height:110px;padding:6px 7px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s;position:relative;}
+.cal-m-cell{min-height:120px;padding:6px 7px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s;position:relative;}
 .cal-m-cell:nth-child(7n){border-right:none;}
 .cal-m-cell:hover{background:var(--surface2);}
 .cal-m-cell.cal-oth{opacity:.4;}
@@ -447,13 +447,15 @@ header {
 .cal-m-grid{position:relative;}
 .ds-bar-layer{position:absolute;inset:0;pointer-events:none;z-index:5;overflow:visible;}
 .ds-span-bar{
-  position:absolute; height:22px; border-radius:4px;
+  position:absolute; height:22px; border-radius:20px;
   display:flex; align-items:center; gap:4px;
-  padding:0 8px; font-size:.75rem; font-weight:700;
-  box-shadow:0 1px 4px #0003; overflow:hidden;
+  padding:0 10px; font-size:.74rem; font-weight:700;
+  box-shadow:0 2px 6px #0004; overflow:hidden;
   white-space:nowrap; pointer-events:all; cursor:default;
-  z-index:6;
+  z-index:6; letter-spacing:.01em;
+  transition:opacity .15s;
 }
+.ds-span-bar:hover{ opacity:.85; }
 .ds-span-icon{ font-size:.85rem; flex-shrink:0; }
 .ds-span-label{ overflow:hidden; text-overflow:ellipsis; }
 
@@ -1203,7 +1205,6 @@ var DS_TYPES = [
   { id:'patmat',   icon:'👶', label:'Paternity/Maternity', color:'#f472a8', tc:'#c9184a', hours:false },
   { id:'bereave',  icon:'🕊️', label:'Bereavement',         color:'#d9cfc4', tc:'#6b6057', hours:false },
   { id:'overtime', icon:'⏱️', label:'Overtime',            color:'#c8b8ff', tc:'#6a0dad', hours:true  },
-  { id:'other',    icon:'❓', label:'Other',               color:'#e8e6f0', tc:'#5a5870', hours:false, hasDesc:true },
 ];
 var DS_DEFAULT_HRS = 8;
 
@@ -1217,6 +1218,11 @@ var ds = {
 
 // ── Custom statuses (user-defined, extend DS_TYPES) ──
 ds.custom = [];
+
+// Helpers for per-day status arrays
+function dsGetDay(dk2){ var v=ds.data[dk2]; if(!v) return []; return Array.isArray(v)?v:[v]; }
+function dsSetDay(dk2,arr){ if(!arr||!arr.length) delete ds.data[dk2]; else ds.data[dk2]=arr; }
+
 
 function dsAllTypes() {
   return DS_TYPES.concat(ds.custom);
@@ -1292,7 +1298,17 @@ async function dsSave() {
   try { var j=JSON.stringify(ds.data); await sbSet(wsKey('cal_status'),j); ds.saved=j; } catch(e) {}
 }
 async function dsLoad() {
-  try { var v=await sbGet(wsKey('cal_status')); if(v){ds.data=JSON.parse(v);ds.saved=v;} } catch(e) {}
+  try {
+    var v=await sbGet(wsKey('cal_status'));
+    if(v){
+      var raw=JSON.parse(v);
+      // Migrate: wrap any plain object values into arrays
+      Object.keys(raw).forEach(function(k){
+        if(raw[k]&&!Array.isArray(raw[k])) raw[k]=[raw[k]];
+      });
+      ds.data=raw; ds.saved=v;
+    }
+  } catch(e) {}
   ds.loaded=true;
   dsCustomLoad().then(function(){ dsBuild(); dsTally(); });
 }
@@ -1349,8 +1365,8 @@ function dsApply(dk2) {
     var di=document.getElementById('dsOtherDesc');
     if(dt) dt.textContent=dk2;
     if(ei) ei.value=t.icon;
-    var ex=ds.data[dk2];
-    if(di) di.value=(ex&&ex.type===ds.active&&ex.desc)||'';
+    var ex=dsGetDay(dk2).find(function(x){return x.type===ds.active;});
+    if(di) di.value=(ex&&ex.desc)||'';
     if(m)  m.style.display='flex';
   } else if(t.hours) {
     ds.pending=dk2;
@@ -1360,11 +1376,14 @@ function dsApply(dk2) {
     var dt=document.getElementById('dsHrsDate');
     if(lbl) lbl.textContent=t.icon+' '+t.label;
     if(dt)  dt.textContent=dk2;
-    if(inp) inp.value=(ds.data[dk2]&&ds.data[dk2].hrs)||DS_DEFAULT_HRS;
+    var existing=dsGetDay(dk2).find(function(x){return x.type===ds.active;});
+    if(inp) inp.value=(existing&&existing.hrs)||DS_DEFAULT_HRS;
     if(m)   m.style.display='flex';
   } else {
-    if(ds.data[dk2]&&ds.data[dk2].type===ds.active) delete ds.data[dk2];
-    else ds.data[dk2]={type:ds.active};
+    var arr=dsGetDay(dk2);
+    var idx=arr.findIndex(function(x){return x.type===ds.active;});
+    if(idx>=0) arr.splice(idx,1); else arr.push({type:ds.active});
+    dsSetDay(dk2,arr);
     dsSave(); dsRefresh(); dsTally(); dsMiniCal();
   }
 }
@@ -1372,7 +1391,11 @@ function dsApply(dk2) {
 window.dsOtherSave=function(){
   var dk2=ds.pending; if(!dk2) return;
   var desc=document.getElementById('dsOtherDesc').value.trim();
-  ds.data[dk2]={type:ds.active,desc:desc};
+  var arr=dsGetDay(dk2);
+  var idx=arr.findIndex(function(x){return x.type===ds.active;});
+  var entry={type:ds.active,desc:desc};
+  if(idx>=0) arr[idx]=entry; else arr.push(entry);
+  dsSetDay(dk2,arr);
   document.getElementById('dsOtherModal').style.display='none';
   ds.pending=null;
   dsSave(); dsRefresh(); dsTally(); dsMiniCal();
@@ -1386,7 +1409,10 @@ window.dsHrsSave=function(){
   var dk2=ds.pending; if(!dk2) return;
   var v=parseFloat(document.getElementById('dsHrsInput').value)||DS_DEFAULT_HRS;
   v=Math.max(0.5,Math.min(24,Math.round(v*2)/2));
-  ds.data[dk2]={type:ds.active,hrs:v};
+  var arr2=dsGetDay(dk2);
+  var hi=arr2.findIndex(function(x){return x.type===ds.active;});
+  if(hi>=0) arr2[hi].hrs=v; else arr2.push({type:ds.active,hrs:v});
+  dsSetDay(dk2,arr2);
   document.getElementById('dsHrsModal').style.display='none';
   ds.pending=null;
   dsSave(); dsRefresh(); dsTally(); dsMiniCal();
@@ -1430,31 +1456,39 @@ function dsInject() {
   // Sort dates
   var allDates=Object.keys(dateMap).sort();
 
-  // Group into consecutive runs of same type
+  // For each status type, find its consecutive runs independently
+  // Also track how many bars are stacked on each date (for vertical offset)
+  var stackCount={}; // dk2 -> count of bars placed so far
+  var allTypes2=dsAllTypes();
   var runs=[];
-  var i=0;
-  while(i<allDates.length){
-    var dk=allDates[i];
-    var s=ds.data[dk];
-    if(!s){ i++; continue; }
-    var runType=s.type;
-    var run=[dk];
-    var j=i+1;
-    while(j<allDates.length){
-      var nextDk=allDates[j];
-      var ns=ds.data[nextDk];
-      if(!ns||ns.type!==runType) break;
-      // Check consecutive days
-      var prev=new Date(allDates[j-1]+'T00:00:00');
-      var next=new Date(nextDk+'T00:00:00');
-      var diff=(next-prev)/(1000*60*60*24);
-      if(diff!==1) break;
-      run.push(nextDk);
-      j++;
+  allTypes2.forEach(function(typeObj){
+    var tid=typeObj.id;
+    // Get all dates that have this type
+    var typeDates=allDates.filter(function(dk){
+      return dsGetDay(dk).some(function(s){return s.type===tid;});
+    });
+    if(!typeDates.length) return;
+    // Group into consecutive runs
+    var i=0;
+    while(i<typeDates.length){
+      var run=[typeDates[i]];
+      var j=i+1;
+      while(j<typeDates.length){
+        var prev=new Date(typeDates[j-1]+'T00:00:00');
+        var next=new Date(typeDates[j]+'T00:00:00');
+        if((next-prev)/(1000*60*60*24)!==1) break;
+        run.push(typeDates[j]);
+        j++;
+      }
+      // Get the entry for first date to pass hrs/desc
+      var s0=dsGetDay(run[0]).find(function(s){return s.type===tid;})||{};
+      runs.push({type:tid, dates:run, data:s0});
+      i=j;
     }
-    runs.push({type:runType, dates:run, data:s});
-    i=j;
-  }
+  });
+  // Sort runs so we draw them in a stable order (by type order)
+  // stackCount tracks vertical slot per date
+
 
   // Create bar layer over the grid
   var layer=document.createElement('div');
@@ -1488,10 +1522,21 @@ function dsInject() {
     });
     if(seg) segments.push(seg);
 
+    var BAR_H=24, BAR_GAP=3, BAR_TOP=28;
     segments.forEach(function(sg,si){
       var r1=sg.startCell.getBoundingClientRect();
       var r2=sg.endCell.getBoundingClientRect();
-      var top=r1.top-gridRect.top+30;  // 30px down from cell top (below date number)
+      // Determine stack slot for this segment's first date
+      var slot=stackCount[sg.start]||0;
+      // Update stackCount for all dates in this segment
+      var d=new Date(sg.start+'T00:00:00');
+      var dEnd=new Date(sg.end+'T00:00:00');
+      while(d<=dEnd){
+        var dk3=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+        stackCount[dk3]=(stackCount[dk3]||0)+1;
+        d.setDate(d.getDate()+1);
+      }
+      var top=r1.top-gridRect.top+BAR_TOP+(slot*(BAR_H+BAR_GAP));
       var left=r1.left-gridRect.left+1;
       var right=r2.right-gridRect.left-1;
       var width=right-left;
@@ -1500,10 +1545,9 @@ function dsInject() {
       bar.className='ds-span-bar';
       bar.title=titleText;
       bar.style.cssText=(
-        'top:'+top+'px;left:'+left+'px;width:'+width+'px;'
+        'top:'+top+'px;left:'+left+'px;width:'+width+'px;height:'+BAR_H+'px;'
         +'background:'+t.color+';color:'+t.tc+';'
       );
-      // Show icon+label only on first segment of run
       if(si===0){
         bar.innerHTML='<span class="ds-span-icon">'+t.icon+'</span>'
           +'<span class="ds-span-label">'+t.label+extraText+'</span>';
@@ -1581,7 +1625,6 @@ function dsTally() {
   dsAllTypes().forEach(function(t){counts[t.id]=0;hrs[t.id]=0;});
 
   Object.keys(ds.data).forEach(function(dk2){
-    var s=ds.data[dk2];
     var d=new Date(dk2);
     var inRange;
     if(useFY){
@@ -1590,9 +1633,11 @@ function dsTally() {
       inRange=dk2.startsWith(String(year)+'-');
     }
     if(!inRange) return;
-    counts[s.type]=(counts[s.type]||0)+1;
-    var t=DS_TYPES.find(function(x){return x.id===s.type;});
-    if(t&&t.hours) hrs[s.type]=(hrs[s.type]||0)+(s.hrs||DS_DEFAULT_HRS);
+    dsGetDay(dk2).forEach(function(s){
+      counts[s.type]=(counts[s.type]||0)+1;
+      var t=dsAllTypes().find(function(x){return x.id===s.type;});
+      if(t&&t.hours) hrs[s.type]=(hrs[s.type]||0)+(s.hrs||DS_DEFAULT_HRS);
+    });
   });
 
   var rows=dsAllTypes().filter(function(t){return counts[t.id]>0;}).map(function(t){
@@ -1645,12 +1690,13 @@ window.dsPrintTally=function(fromDate,toDate){
   var counts={},hrs={};
   allTypes.forEach(function(t){counts[t.id]=0;hrs[t.id]=0;});
   Object.keys(ds.data).forEach(function(dk2){
-    var s=ds.data[dk2],inRange;
-    inRange=dk2>=fromDate&&dk2<=toDate;
+    var inRange=dk2>=fromDate&&dk2<=toDate;
     if(!inRange) return;
-    counts[s.type]=(counts[s.type]||0)+1;
-    var t=allTypes.find(function(x){return x.id===s.type;});
-    if(t&&t.hours) hrs[s.type]=(hrs[s.type]||0)+(s.hrs||DS_DEFAULT_HRS);
+    dsGetDay(dk2).forEach(function(s){
+      counts[s.type]=(counts[s.type]||0)+1;
+      var t=allTypes.find(function(x){return x.id===s.type;});
+      if(t&&t.hours) hrs[s.type]=(hrs[s.type]||0)+(s.hrs||DS_DEFAULT_HRS);
+    });
   });
   var rows=allTypes.filter(function(t){return counts[t.id]>0;}).map(function(t){
     var h=hrs[t.id]>0?' / '+hrs[t.id]+' hours':'';
@@ -1691,8 +1737,9 @@ function dsMiniCal() {
     var dn=i-sd+1,v=dn>=1&&dn<=l.getDate();
     var dk2=v?y+'-'+String(m+1).padStart(2,'0')+'-'+String(dn).padStart(2,'0'):'';
     var isToday=v&&dk2===tk;
-    var s=v&&ds.data[dk2];
-    var t=s?DS_TYPES.find(function(x){return x.id===ds.data[dk2].type;}):null;
+    var sArr=v?dsGetDay(dk2):[];
+    var s=sArr.length?sArr[0]:null;
+    var t=s?dsAllTypes().find(function(x){return x.id===s.type;}):null;
     var dot=t?'<span style="position:absolute;bottom:1px;left:50%;transform:translateX(-50%);width:5px;height:5px;border-radius:50%;background:'+t.color+'"></span>':'';
     h+='<div class="mini-cal-day'+(v?'':' other-month')+(isToday?' today':'')+'"'
       +(v?' onclick="dsMiniClick(\''+dk2+'\')" style="position:relative;'+(ds.active?'cursor:crosshair;':'')+(s?'background:color-mix(in srgb,'+t.color+' 20%,var(--surface))':'')+'"':'')
