@@ -446,13 +446,21 @@ header {
 .ds-ot-box h3{font-size:.9rem;font-weight:700;margin-bottom:14px;color:var(--accent);}
 .cal-m-grid{position:relative;}
 .ds-bar-layer{position:absolute;inset:0;pointer-events:none;z-index:5;overflow:visible;}
+.ds-counter-dots{position:absolute;bottom:4px;left:4px;right:4px;
+  display:flex;flex-wrap:wrap;gap:1px;align-items:flex-end;pointer-events:all;z-index:7;}
+.ds-counter-dot{font-size:.85rem;line-height:1;cursor:pointer;transition:transform .1s;}
+.ds-counter-dot:hover{transform:scale(1.2);}
+.ds-counter-add{font-size:.75rem;opacity:.5;cursor:pointer;padding:0 2px;
+  border:1px dashed currentColor;border-radius:4px;line-height:1;transition:opacity .15s;}
+.ds-counter-add:hover{opacity:1;}
+
 .ds-col-wrap{display:flex;flex-wrap:wrap;gap:3px;padding:3px 4px;border-bottom:1px solid var(--border);min-height:28px;}
 .ds-col-chip{
   display:inline-flex;align-items:center;gap:4px;
   padding:2px 8px;border-radius:5px;font-size:.62rem;
   font-weight:800;white-space:nowrap;cursor:pointer;
   letter-spacing:.04em;text-transform:uppercase;
-  border:1.5px solid currentColor;
+  border:1px solid currentColor;
   background:transparent;
   box-shadow:inset 0 0 0 2000px color-mix(in srgb,currentColor 12%,transparent);
   opacity:.82;transition:opacity .15s;position:relative;
@@ -469,17 +477,15 @@ header {
 .ds-day-nav-wrap{display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin-left:8px;}
 
 .ds-span-bar{
-  position:absolute; height:24px; border-radius:6px;
+  position:absolute; height:24px; border-radius:20px;
   display:flex; align-items:center; gap:5px;
-  padding:0 9px; font-size:.72rem; font-weight:800;
+  padding:0 10px; font-size:.72rem; font-weight:800;
   white-space:nowrap; pointer-events:all; cursor:default;
   z-index:6; letter-spacing:.04em; text-transform:uppercase;
-  /* Stamp feel: colored border, slight opacity, subtle inner texture */
-  border: 2px solid currentColor;
-  opacity: 0.82;
+  border: 1.5px solid currentColor;
+  opacity: 0.85;
   background: transparent !important;
-  /* color is set inline as t.tc — the text/border color */
-  box-shadow: inset 0 0 0 2000px color-mix(in srgb, currentColor 15%, transparent);
+  box-shadow: inset 0 0 0 2000px color-mix(in srgb, currentColor 12%, transparent);
   transition: opacity .15s;
   overflow: visible;
 }
@@ -515,6 +521,30 @@ body { display: flex; flex-direction: column; height: 100vh; }
 .mob-sidebar-controls { display: none; }
 .mob-fab { display: none; }
 .bottom-nav { display: none; }
+
+
+/* ── TALLY TAB ── */
+.cal-tabs{display:flex;gap:0;border-bottom:2px solid var(--border);background:var(--bg);flex-shrink:0;}
+.cal-tab-btn{background:none;border:none;border-bottom:3px solid transparent;margin-bottom:-2px;
+  color:var(--text-muted);font-family:'Inter',system-ui,sans-serif;font-size:.72rem;font-weight:600;
+  padding:10px 18px;cursor:pointer;transition:all .2s;letter-spacing:.5px;text-transform:uppercase;}
+.cal-tab-btn.active{color:var(--accent);border-bottom-color:var(--accent);}
+.cal-tab-panel{display:none;flex:1;overflow-y:auto;}
+.cal-tab-panel.active{display:flex;flex-direction:column;}
+.tally-page{padding:20px 24px;}
+.tally-page h2{font-family:'Fraunces',serif;font-weight:900;font-size:1.3rem;
+  letter-spacing:-.5px;color:var(--accent);margin-bottom:16px;}
+.tally-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:18px;}
+.tally-grid{display:flex;flex-direction:column;gap:8px;}
+.tally-card{display:flex;align-items:center;gap:12px;padding:12px 16px;
+  background:var(--surface);border:1px solid var(--border);border-radius:10px;}
+.tally-card-icon{font-size:1.4rem;}
+.tally-card-info{flex:1;}
+.tally-card-label{font-size:.8rem;font-weight:700;color:var(--text);}
+.tally-card-sub{font-size:.68rem;color:var(--text-muted);margin-top:2px;}
+.tally-card-count{font-family:'Fraunces',serif;font-weight:900;font-size:1.6rem;
+  color:var(--accent);letter-spacing:-1px;line-height:1;}
+.tally-card-hrs{font-size:.65rem;color:var(--text-muted);margin-top:2px;text-align:right;}
 
 /* ── LOADING ── */
 .loading-overlay { position:fixed; inset:0; background:var(--bg); z-index:999; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:16px; transition:opacity .4s; }
@@ -594,23 +624,45 @@ body { display: flex; flex-direction: column; height: 100vh; }
         <div class="mini-cal" id="calMiniCal"></div>
       </div>
       <div class="sidebar-section">
-        <h3>Day Status</h3>
+        <h3 style="display:flex;align-items:center;justify-content:space-between">
+          Day Status
+          <button id="dsUndoBtn" onclick="dsUndo()" disabled
+            style="font-size:.62rem;background:var(--surface2);border:1px solid var(--border);
+                   color:var(--text-muted);padding:3px 10px;border-radius:6px;cursor:pointer;
+                   opacity:0.4;transition:all .15s;font-family:inherit"
+            onmouseover="if(!this.disabled)this.style.borderColor='var(--accent)';this.style.color='var(--accent)'"
+            onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-muted)'"
+          >↩ Undo</button>
+        </h3>
         <div id="dsToolbar"></div>
       </div>
       <div class="sidebar-section">
-        <h3 style="display:flex;align-items:center;justify-content:space-between;gap:6px;flex-wrap:wrap">
-          Tally
-          <select id="dsTallyYrSel" onchange="dsTally()" style="font-size:.65rem;background:var(--surface2);border:1px solid var(--border);color:var(--text-muted);border-radius:6px;padding:2px 6px;cursor:pointer"></select>
-        </h3>
-        <div style="display:flex;gap:6px;margin-bottom:8px">
-          <label class="print-opt-toggle" id="dsTallyFY" onclick="this.classList.toggle('on');dsTally()" style="font-size:.62rem;padding:4px 8px;cursor:pointer">📅 Fin. Year</label>
-          <button class="icon-btn" onclick="dsPrintRangeOpen()" style="font-size:.62rem;padding:4px 8px">🖨️</button>
-        </div>
-        <div id="dsTally"><p style="font-size:.7rem;color:var(--text-muted)">No statuses logged yet.</p></div>
+        <button class="icon-btn" onclick="calSwitchTab('tally')" style="width:100%;font-size:.7rem;padding:6px;display:flex;align-items:center;justify-content:center;gap:6px">📊 View Tally</button>
+        <!-- Hidden selectors kept for dsTally() compat -->
+        <div style="display:none"><select id="dsTallyYrSel"></select><label id="dsTallyFY"></label><div id="dsTally"></div></div>
       </div>
       <div class="sidebar-section"><h3>Upcoming</h3><div id="cUpList"></div></div>
     </div>
+    <div style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+  <div class="cal-tabs">
+    <button class="cal-tab-btn active" id="calTabCal" onclick="calSwitchTab('cal')">Calendar</button>
+    <button class="cal-tab-btn" id="calTabTally" onclick="calSwitchTab('tally')">Tally</button>
+  </div>
+  <div class="cal-tab-panel active" id="calPanelCal">
     <div style="flex:1;display:flex;flex-direction:column;overflow:hidden" id="cMain"></div>
+  </div>
+  <div class="cal-tab-panel" id="calPanelTally">
+    <div class="tally-page">
+      <h2>📅 Status Tally</h2>
+      <div class="tally-controls">
+        <select id="dsTallyYrSel2" onchange="dsTallyFull()" style="font-size:.72rem;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 10px;cursor:pointer"></select>
+        <label class="print-opt-toggle" id="dsTallyFY2" onclick="this.classList.toggle('on');dsTallyFull()" style="font-size:.65rem;cursor:pointer">📅 Financial Year</label>
+        <button class="icon-btn" onclick="dsPrintRangeOpen()" style="font-size:.7rem;padding:5px 12px">🖨️ Print</button>
+      </div>
+      <div class="tally-grid" id="dsTallyFull"></div>
+    </div>
+  </div>
+</div>
   </div>
 </div>
 
@@ -669,6 +721,22 @@ body { display: flex; flex-direction: column; height: 100vh; }
         <input type="color" id="dsCustomColor" value="#c8b8ff" style="width:36px;height:28px;border:1px solid var(--border);border-radius:6px;cursor:pointer;padding:2px">
         <label style="display:flex;align-items:center;gap:6px;font-size:.72rem;color:var(--text-muted);cursor:pointer"><input type="checkbox" id="dsCustomHours"> Track hours</label>
       </div>
+      <div style="margin-bottom:10px">
+        <div class="print-section-label" style="margin-bottom:6px">Display style</div>
+        <div style="display:flex;gap:6px">
+          <label style="display:flex;align-items:center;gap:5px;font-size:.72rem;color:var(--text-muted);cursor:pointer;padding:5px 10px;border:1px solid var(--border);border-radius:6px;flex:1;justify-content:center" id="dsDisplayBar">
+            <input type="radio" name="dsDisplayMode" value="bar" checked onchange="dsCustomPreviewMode('bar')"> 📋 Bar
+          </label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:.72rem;color:var(--text-muted);cursor:pointer;padding:5px 10px;border:1px solid var(--border);border-radius:6px;flex:1;justify-content:center" id="dsDisplayEmoji">
+            <input type="radio" name="dsDisplayMode" value="emoji" onchange="dsCustomPreviewMode('emoji')"> 😊 Emoji only
+          </label>
+        </div>
+      </div>
+      <div style="margin-bottom:12px">
+        <label style="display:flex;align-items:center;gap:8px;font-size:.72rem;color:var(--text-muted);cursor:pointer;padding:8px 10px;border:1px solid var(--border);border-radius:6px">
+          <input type="checkbox" id="dsCustomCounter"> 🔢 Counter — tap to add multiple per day (e.g. pills, water)
+        </label>
+      </div>
       <button class="btn-primary" onclick="dsCustomAdd()" style="width:100%">+ Add Status</button>
     </div>
   </div>
@@ -700,36 +768,6 @@ body { display: flex; flex-direction: column; height: 100vh; }
   </div>
 </div>
 
-<!-- DS PRINT RANGE MODAL -->
-<div class="ds-ot-modal" id="dsPrintRangeModal" style="display:none">
-  <div class="ds-ot-box">
-    <h3>🖨️ Print Date Range</h3>
-    <div class="form-row"><label class="print-section-label">From</label><input class="form-input" id="dsPRFrom" type="date"></div>
-    <div class="form-row"><label class="print-section-label">To</label><input class="form-input" id="dsPRTo" type="date"></div>
-    <div class="modal-btns" style="margin-top:14px">
-      <button class="btn-cancel" style="flex:1" onclick="dsPrintRangeCancel()">Cancel</button>
-      <button class="btn-primary" style="flex:2" onclick="dsPrintRangeGo()">Print</button>
-    </div>
-  </div>
-</div>
-<!-- DS PRINT RANGE MODAL -->
-<div id="dsPrintRangeModal" style="display:none;position:fixed;inset:0;background:#0008;z-index:700;align-items:center;justify-content:center;padding:20px">
-  <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:26px;width:360px;max-width:95vw">
-    <h2 style="font-size:.95rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:18px">🖨️ Print Status Tally</h2>
-    <div class="form-row">
-      <label style="font-size:.63rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-muted)">From</label>
-      <input class="form-input" id="dsPRFrom" type="date">
-    </div>
-    <div class="form-row">
-      <label style="font-size:.63rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-muted)">To</label>
-      <input class="form-input" id="dsPRTo" type="date">
-    </div>
-    <div style="display:flex;gap:8px;margin-top:18px">
-      <button class="btn-cancel" onclick="document.getElementById('dsPrintRangeModal').style.display='none'" style="flex:1">Cancel</button>
-      <button class="btn-primary" onclick="dsPrintRangeGo()" style="flex:2">Print</button>
-    </div>
-  </div>
-</div>
 
 <div id="cGhost"></div>
 
@@ -1251,11 +1289,12 @@ var DS_TYPES = [
 var DS_DEFAULT_HRS = 8;
 
 var ds = {
-  data: {},      // { 'YYYY-MM-DD': { type, hrs? } }
+  data: {},      // { 'YYYY-MM-DD': [{type, hrs?, desc?}, ...] }
   active: null,  // currently selected type id
   pending: null, // date pending overtime input
   loaded: false,
-  saved: ''
+  saved: '',
+  history: []    // undo stack of data snapshots
 };
 
 // ── Custom statuses (user-defined, extend DS_TYPES) ──
@@ -1265,8 +1304,26 @@ ds.custom = [];
 function dsGetDay(dk2){ var v=ds.data[dk2]; if(!v) return []; return Array.isArray(v)?v:[v]; }
 function dsSetDay(dk2,arr){ if(!arr||!arr.length) delete ds.data[dk2]; else ds.data[dk2]=arr; }
 
+// Undo history
+function dsSnap(){
+  ds.history.push(JSON.stringify(ds.data));
+  if(ds.history.length>50) ds.history.shift();
+  dsUpdateUndoBtn();
+}
+function dsUpdateUndoBtn(){
+  var btn=document.getElementById('dsUndoBtn');
+  if(btn){ btn.disabled=!ds.history.length; btn.style.opacity=ds.history.length?'1':'0.4'; }
+}
+window.dsUndo=function(){
+  if(!ds.history.length) return;
+  ds.data=JSON.parse(ds.history.pop());
+  dsUpdateUndoBtn();
+  dsSave(); dsRefresh(); dsTally(); dsMiniCal();
+};
+
 // Delete a single status type from a date
 window.dsDeleteStatus=function(dk2,typeId){
+  dsSnap();
   var arr=dsGetDay(dk2).filter(function(s){return s.type!==typeId;});
   dsSetDay(dk2,arr);
   dsSave(); dsRefresh(); dsTally(); dsMiniCal();
@@ -1285,6 +1342,14 @@ async function dsCustomSave() {
 async function dsCustomLoad() {
   try { var v=await sbGet(wsKey('cal_status_custom')); if(v) ds.custom=JSON.parse(v); } catch(e) {}
 }
+
+window.dsCustomPreviewMode=function(mode){
+  // Visual feedback on radio labels
+  var barLbl=document.getElementById('dsDisplayBar');
+  var emojiLbl=document.getElementById('dsDisplayEmoji');
+  if(barLbl) barLbl.style.borderColor=mode==='bar'?'var(--accent)':'var(--border)';
+  if(emojiLbl) emojiLbl.style.borderColor=mode==='emoji'?'var(--accent)':'var(--border)';
+};
 
 window.dsCustomOpen = function() {
   var m = document.getElementById('dsCustomModal'); if(!m) return;
@@ -1329,7 +1394,11 @@ window.dsCustomAdd = function() {
   var hours = document.getElementById('dsCustomHours').checked;
   var r=parseInt(color.slice(1,3),16), g=parseInt(color.slice(3,5),16), b=parseInt(color.slice(5,7),16);
   var tc = (r*299+g*587+b*114)/1000 < 128 ? '#fff' : '#2d2a3e';
-  ds.custom.push({ id:'custom_'+Date.now(), icon:icon, label:name, color:color, tc:tc, hours:hours });
+  var modeEl=document.querySelector('input[name="dsDisplayMode"]:checked');
+  var displayMode=modeEl?modeEl.value:'bar';
+  var isCounter=document.getElementById('dsCustomCounter').checked;
+  if(isCounter) displayMode='emoji'; // counters always use emoji display
+  ds.custom.push({ id:'custom_'+Date.now(), icon:icon, label:name, color:color, tc:tc, hours:hours, displayMode:displayMode, isCounter:isCounter });
   dsCustomSave();
   dsCustomRenderList();
   dsBuild();
@@ -1407,6 +1476,17 @@ window.dsInterceptDay = function(dk2) {
 function dsApply(dk2) {
   var t=dsAllTypes().find(function(x){return x.id===ds.active;});
   if(!t) return;
+  if(t.isCounter) {
+    // Counter: increment count on this day
+    dsSnap();
+    var arr=dsGetDay(dk2);
+    var entry=arr.find(function(x){return x.type===ds.active;});
+    if(entry){ entry.count=(entry.count||1)+1; }
+    else { arr.push({type:ds.active,count:1}); }
+    dsSetDay(dk2,arr);
+    dsSave(); dsRefresh(); dsTally(); dsMiniCal();
+    return;
+  }
   if(t.hasDesc) {
     ds.pending=dk2;
     var m=document.getElementById('dsOtherModal');
@@ -1430,6 +1510,7 @@ function dsApply(dk2) {
     if(inp) inp.value=(existing&&existing.hrs)||DS_DEFAULT_HRS;
     if(m)   m.style.display='flex';
   } else {
+    dsSnap();
     var arr=dsGetDay(dk2);
     var idx=arr.findIndex(function(x){return x.type===ds.active;});
     if(idx>=0) arr.splice(idx,1); else arr.push({type:ds.active});
@@ -1441,6 +1522,7 @@ function dsApply(dk2) {
 window.dsOtherSave=function(){
   var dk2=ds.pending; if(!dk2) return;
   var desc=document.getElementById('dsOtherDesc').value.trim();
+  dsSnap();
   var arr=dsGetDay(dk2);
   var idx=arr.findIndex(function(x){return x.type===ds.active;});
   var entry={type:ds.active,desc:desc};
@@ -1459,6 +1541,7 @@ window.dsHrsSave=function(){
   var dk2=ds.pending; if(!dk2) return;
   var v=parseFloat(document.getElementById('dsHrsInput').value)||DS_DEFAULT_HRS;
   v=Math.max(0.5,Math.min(24,Math.round(v*2)/2));
+  dsSnap();
   var arr2=dsGetDay(dk2);
   var hi=arr2.findIndex(function(x){return x.type===ds.active;});
   if(hi>=0) arr2[hi].hrs=v; else arr2.push({type:ds.active,hrs:v});
@@ -1614,6 +1697,52 @@ function dsInject() {
     });
   });
 
+
+  // Counter types: render emoji dots at bottom of each cell
+  cells.forEach(function(cell){
+    var oc=cell.getAttribute('onclick')||'';
+    var cm=oc.match(/cGoDay.'([^']+)'/);
+    if(!cm) return;
+    var dk2c=cm[1];
+    cell.querySelectorAll('.ds-counter-dots').forEach(function(el){el.remove();});
+    var counterStatuses=dsGetDay(dk2c).filter(function(s){
+      var tc=dsAllTypes().find(function(x){return x.id===s.type;});
+      return tc&&tc.isCounter;
+    });
+    if(!counterStatuses.length) return;
+    var dotsWrap=document.createElement('div');
+    dotsWrap.className='ds-counter-dots';
+    counterStatuses.forEach(function(s){
+      var tc=dsAllTypes().find(function(x){return x.id===s.type;});
+      if(!tc) return;
+      var count=s.count||1;
+      for(var ci=0;ci<count;ci++){
+        var dot=document.createElement('span');
+        dot.className='ds-counter-dot';
+        dot.title=tc.label+' ('+count+'x) — click to add, right-click to remove';
+        dot.textContent=tc.icon;
+        dot.style.color=tc.color;
+        (function(sType,dk2cc){
+          dot.addEventListener('click',function(e){
+            e.stopPropagation();
+            if(ds.active===sType){ dsApply(dk2cc); }
+          });
+          dot.addEventListener('contextmenu',function(e){
+            e.preventDefault(); e.stopPropagation();
+            dsSnap();
+            var arr=dsGetDay(dk2cc);
+            var entry=arr.find(function(x){return x.type===sType;});
+            if(entry&&entry.count>1){ entry.count--; }
+            else { dsDeleteStatus(dk2cc,sType); return; }
+            dsSetDay(dk2cc,arr);
+            dsSave(); dsRefresh(); dsTally(); dsMiniCal();
+          });
+        })(s.type, dk2c);
+        dotsWrap.appendChild(dot);
+      }
+    });
+    cell.appendChild(dotsWrap);
+  });
 
   // Week: chips at top of each day column header
   main.querySelectorAll('.cal-w-ch').forEach(function(ch){
@@ -1856,6 +1985,60 @@ document.addEventListener('DOMContentLoaded', function(){
     }
   }
 })
+
+// ── Calendar main tab switcher ──
+window.calSwitchTab=function(tab){
+  ['cal','tally'].forEach(function(t){
+    document.getElementById('calTab'+t.charAt(0).toUpperCase()+t.slice(1)).classList.toggle('active',t===tab);
+    document.getElementById('calPanel'+t.charAt(0).toUpperCase()+t.slice(1)).classList.toggle('active',t===tab);
+  });
+  if(tab==='tally'){ dsTallyFull(); dsInitTallyYrSel(); }
+};
+
+function dsInitTallyYrSel(){
+  var sel=document.getElementById('dsTallyYrSel2'); if(!sel||sel.options.length) return;
+  var yr=new Date().getFullYear();
+  for(var y=yr+1;y>=yr-5;y--){
+    var o=document.createElement('option'); o.value=y; o.textContent=y;
+    if(y===yr) o.selected=true; sel.appendChild(o);
+  }
+}
+
+function dsTallyFull(){
+  var el=document.getElementById('dsTallyFull'); if(!el) return;
+  var yrSel=document.getElementById('dsTallyYrSel2');
+  var year=yrSel?parseInt(yrSel.value):new Date().getFullYear();
+  var useFY=document.getElementById('dsTallyFY2')&&document.getElementById('dsTallyFY2').classList.contains('on');
+  var allTypes=dsAllTypes();
+  var counts={},hrs={};
+  allTypes.forEach(function(t){counts[t.id]=0;hrs[t.id]=0;});
+  Object.keys(ds.data).forEach(function(dk2){
+    var d=new Date(dk2),inRange;
+    if(useFY) inRange=d>=new Date(year-1,6,1)&&d<=new Date(year,5,30);
+    else inRange=dk2.startsWith(String(year)+'-');
+    if(!inRange) return;
+    dsGetDay(dk2).forEach(function(s){
+      counts[s.type]=(counts[s.type]||0)+1;
+      var t=allTypes.find(function(x){return x.id===s.type;});
+      if(t&&t.hours) hrs[s.type]=(hrs[s.type]||0)+(s.hrs||DS_DEFAULT_HRS);
+    });
+  });
+  var types=allTypes.filter(function(t){return counts[t.id]>0;});
+  if(!types.length){
+    el.innerHTML='<p style="color:var(--text-muted);font-size:.8rem">No statuses recorded for this period.</p>';
+    return;
+  }
+  el.innerHTML=types.map(function(t){
+    var hrsText=hrs[t.id]>0?hrs[t.id]+' hours total':'';
+    return '<div class="tally-card" style="border-left:4px solid '+t.color+'">'
+      +'<div class="tally-card-icon">'+t.icon+'</div>'
+      +'<div class="tally-card-info"><div class="tally-card-label">'+t.label+'</div>'
+      +(hrsText?'<div class="tally-card-sub">'+hrsText+'</div>':'')+'</div>'
+      +'<div style="text-align:right"><div class="tally-card-count">'+counts[t.id]+'</div>'
+      +'<div class="tally-card-hrs">days</div></div>'
+      +'</div>';
+  }).join('');
+}
 // ══════════════════════════════════════════
 // INIT — Working Copy Bootstrap
 // ══════════════════════════════════════════
