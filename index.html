@@ -332,7 +332,7 @@ header {
 .cal-m-dr{display:grid;grid-template-columns:repeat(7,1fr);position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--border);}
 .cal-m-dh{text-align:center;padding:8px 4px;font-size:.64rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1.5px;}
 .cal-m-grid{display:grid;grid-template-columns:repeat(7,1fr);min-width:500px;}
-.cal-m-cell{min-height:96px;padding:6px 7px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s;position:relative;}
+.cal-m-cell{min-height:110px;padding:6px 7px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s;position:relative;}
 .cal-m-cell:nth-child(7n){border-right:none;}
 .cal-m-cell:hover{background:var(--surface2);}
 .cal-m-cell.cal-oth{opacity:.4;}
@@ -399,10 +399,11 @@ header {
 /* ██ PASTE BACK: Day Status CSS — lines 1407–1455 ██ */
 /* Badge shown on calendar cells */
 .ds-badge {
-  display:inline-flex; align-items:center; gap:2px;
-  font-size:.62rem; padding:1px 5px; border-radius:10px;
-  font-weight:600; white-space:nowrap; max-width:100%;
+  display:inline-flex; align-items:center; gap:3px;
+  font-size:.8rem; padding:3px 8px; border-radius:10px;
+  font-weight:700; white-space:nowrap; max-width:100%;
   overflow:hidden; text-overflow:ellipsis;
+  box-shadow:0 1px 4px #0002;
 }
 .ds-day-badge-wrap {
   display:flex; flex-wrap:wrap; gap:2px; margin-top:2px;
@@ -445,6 +446,17 @@ header {
 .ds-ot-box h3{font-size:.9rem;font-weight:700;margin-bottom:14px;color:var(--accent);}
 .cal-m-grid{position:relative;}
 .ds-bar-layer{position:absolute;inset:0;pointer-events:none;z-index:5;overflow:visible;}
+.ds-span-bar{
+  position:absolute; height:22px; border-radius:4px;
+  display:flex; align-items:center; gap:4px;
+  padding:0 8px; font-size:.75rem; font-weight:700;
+  box-shadow:0 1px 4px #0003; overflow:hidden;
+  white-space:nowrap; pointer-events:all; cursor:default;
+  z-index:6;
+}
+.ds-span-icon{ font-size:.85rem; flex-shrink:0; }
+.ds-span-label{ overflow:hidden; text-overflow:ellipsis; }
+
 
 
 
@@ -548,7 +560,7 @@ body { display: flex; flex-direction: column; height: 100vh; }
         </h3>
         <div style="display:flex;gap:6px;margin-bottom:8px">
           <label class="print-opt-toggle" id="dsTallyFY" onclick="this.classList.toggle('on');dsTally()" style="font-size:.62rem;padding:4px 8px;cursor:pointer">📅 Fin. Year</label>
-          <button class="icon-btn" onclick="dsPrintTally()" style="font-size:.62rem;padding:4px 8px">🖨️</button>
+          <button class="icon-btn" onclick="dsPrintRangeOpen()" style="font-size:.62rem;padding:4px 8px">🖨️</button>
         </div>
         <div id="dsTally"><p style="font-size:.7rem;color:var(--text-muted)">No statuses logged yet.</p></div>
       </div>
@@ -656,6 +668,25 @@ body { display: flex; flex-direction: column; height: 100vh; }
     </div>
   </div>
 </div>
+<!-- DS PRINT RANGE MODAL -->
+<div id="dsPrintRangeModal" style="display:none;position:fixed;inset:0;background:#0008;z-index:700;align-items:center;justify-content:center;padding:20px">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:26px;width:360px;max-width:95vw">
+    <h2 style="font-size:.95rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:18px">🖨️ Print Status Tally</h2>
+    <div class="form-row">
+      <label style="font-size:.63rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-muted)">From</label>
+      <input class="form-input" id="dsPRFrom" type="date">
+    </div>
+    <div class="form-row">
+      <label style="font-size:.63rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-muted)">To</label>
+      <input class="form-input" id="dsPRTo" type="date">
+    </div>
+    <div style="display:flex;gap:8px;margin-top:18px">
+      <button class="btn-cancel" onclick="document.getElementById('dsPrintRangeModal').style.display='none'" style="flex:1">Cancel</button>
+      <button class="btn-primary" onclick="dsPrintRangeGo()" style="flex:2">Print</button>
+    </div>
+  </div>
+</div>
+
 <div id="cGhost"></div>
 
 <!-- ██ PASTE BACK: Event Modal HTML — lines 1872–1907 ██ -->
@@ -692,6 +723,25 @@ body { display: flex; flex-direction: column; height: 100vh; }
       <button class="btn-cancel" id="cEvDel" onclick="cDelEv()" style="color:var(--red);border-color:#ff6e6e44;display:none">Delete</button>
       <button class="btn-cancel" onclick="cCloseModal()">Cancel</button>
       <button class="btn-primary" onclick="cSaveEv()">Save Event</button>
+    </div>
+  </div>
+</div>
+
+<!-- DS PRINT RANGE MODAL -->
+<div id="dsPrintRangeModal" style="display:none;position:fixed;inset:0;background:#0008;z-index:700;align-items:center;justify-content:center;padding:20px">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:26px;width:360px;max-width:95vw">
+    <h2 style="font-size:.95rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:18px">🖨️ Print Status Tally</h2>
+    <div class="form-row">
+      <label style="font-size:.63rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-muted)">From</label>
+      <input class="form-input" id="dsPRFrom" type="date">
+    </div>
+    <div class="form-row">
+      <label style="font-size:.63rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-muted)">To</label>
+      <input class="form-input" id="dsPRTo" type="date">
+    </div>
+    <div style="display:flex;gap:8px;margin-top:18px">
+      <button class="btn-cancel" onclick="document.getElementById('dsPrintRangeModal').style.display='none'" style="flex:1">Cancel</button>
+      <button class="btn-primary" onclick="dsPrintRangeGo()" style="flex:2">Print</button>
     </div>
   </div>
 </div>
@@ -1358,23 +1408,112 @@ function dsInject() {
   var main=document.getElementById('cMain'); if(!main) return;
   var view=window.calSt?window.calSt.view:'month';
 
-  // Month: badge on each cell
-  main.querySelectorAll('.cal-m-cell:not(.cal-oth)').forEach(function(cell){
+  // Month: span bars for consecutive same-type runs
+  // Remove existing wraps and bar layer
+  main.querySelectorAll('.ds-day-wrap').forEach(function(el){el.remove();});
+  var oldLayer=main.querySelector('.ds-bar-layer'); if(oldLayer) oldLayer.remove();
+
+  // Build ordered date map from visible cells
+  var cells=Array.from(main.querySelectorAll('.cal-m-cell:not(.cal-oth)'));
+  var grid=main.querySelector('.cal-m-grid');
+  if(!grid||!cells.length) return;
+
+  // Map date->cell
+  var dateMap={};
+  cells.forEach(function(cell){
     var oc=cell.getAttribute('onclick')||'';
-    var m=oc.match(/cGoDay\('([^']+)'\)/);
-    if(!m) return;
-    var dk2=m[1];
-    var old=cell.querySelector('.ds-day-wrap'); if(old) old.remove();
-    var s=ds.data[dk2]; if(!s) return;
-    var t=dsAllTypes().find(function(x){return x.id===s.type;}); if(!t) return;
-    var wrap=document.createElement('div');
-    wrap.className='ds-day-wrap';
-    var _extra=s.hrs?' '+s.hrs+'h':'';var _title=t.label+(s.hrs?' ('+s.hrs+'h)':'')+(s.desc?' - '+s.desc:'');wrap.innerHTML='<span class="ds-badge" style="background:'+t.color+';color:'+t.tc+'" title="'+_title+'">'+t.icon+_extra+'</span>';
-    var num=cell.querySelector('.cal-m-num');
-    if(num&&num.nextSibling) cell.insertBefore(wrap,num.nextSibling);
-    else cell.appendChild(wrap);
+    var m=oc.match(/cGoDay\('([^']+)'\)/)||oc.match(/cGoDay.'([^']+)'/);
+    if(m){ cell._dsDate=m[1]; dateMap[m[1]]=cell; }
     cell.style.cursor=ds.active?'crosshair':'';
   });
+
+  // Sort dates
+  var allDates=Object.keys(dateMap).sort();
+
+  // Group into consecutive runs of same type
+  var runs=[];
+  var i=0;
+  while(i<allDates.length){
+    var dk=allDates[i];
+    var s=ds.data[dk];
+    if(!s){ i++; continue; }
+    var runType=s.type;
+    var run=[dk];
+    var j=i+1;
+    while(j<allDates.length){
+      var nextDk=allDates[j];
+      var ns=ds.data[nextDk];
+      if(!ns||ns.type!==runType) break;
+      // Check consecutive days
+      var prev=new Date(allDates[j-1]+'T00:00:00');
+      var next=new Date(nextDk+'T00:00:00');
+      var diff=(next-prev)/(1000*60*60*24);
+      if(diff!==1) break;
+      run.push(nextDk);
+      j++;
+    }
+    runs.push({type:runType, dates:run, data:s});
+    i=j;
+  }
+
+  // Create bar layer over the grid
+  var layer=document.createElement('div');
+  layer.className='ds-bar-layer';
+  grid.appendChild(layer);
+
+  var gridRect=grid.getBoundingClientRect();
+
+  // For each run, slice into row segments (7 cols per row), draw a bar per segment
+  runs.forEach(function(run){
+    var t=dsAllTypes().find(function(x){return x.id===run.type;});
+    if(!t) return;
+    var s0=ds.data[run.dates[0]];
+    var extraText=s0&&s0.hrs?' '+s0.hrs+'h':'';
+    var titleText=t.label+(s0&&s0.hrs?' ('+s0.hrs+'h)':'')+(s0&&s0.desc?' \u2014 '+s0.desc:'');
+
+    // Slice into row-level segments
+    var segments=[];
+    var seg=null;
+    run.dates.forEach(function(dk,idx){
+      var cell=dateMap[dk]; if(!cell) return;
+      var cellRect=cell.getBoundingClientRect();
+      // Row index = which grid row (7 cells wide, Monday=col0)
+      var colIdx=cells.indexOf(cell)%7;
+      if(!seg||colIdx===0){
+        if(seg) segments.push(seg);
+        seg={start:dk,end:dk,startCell:cell,endCell:cell};
+      } else {
+        seg.end=dk; seg.endCell=cell;
+      }
+    });
+    if(seg) segments.push(seg);
+
+    segments.forEach(function(sg,si){
+      var r1=sg.startCell.getBoundingClientRect();
+      var r2=sg.endCell.getBoundingClientRect();
+      var top=r1.top-gridRect.top+30;  // 30px down from cell top (below date number)
+      var left=r1.left-gridRect.left+1;
+      var right=r2.right-gridRect.left-1;
+      var width=right-left;
+
+      var bar=document.createElement('div');
+      bar.className='ds-span-bar';
+      bar.title=titleText;
+      bar.style.cssText=(
+        'top:'+top+'px;left:'+left+'px;width:'+width+'px;'
+        +'background:'+t.color+';color:'+t.tc+';'
+      );
+      // Show icon+label only on first segment of run
+      if(si===0){
+        bar.innerHTML='<span class="ds-span-icon">'+t.icon+'</span>'
+          +'<span class="ds-span-label">'+t.label+extraText+'</span>';
+      } else {
+        bar.innerHTML='<span class="ds-span-icon">'+t.icon+'</span>';
+      }
+      layer.appendChild(bar);
+    });
+  });
+
 
   // Week: banner at top of each day column
   main.querySelectorAll('.cal-w-col[data-date]').forEach(function(col){
@@ -1467,18 +1606,47 @@ function dsTally() {
 }
 
 // ── Print tally ──
-window.dsPrintTally=function(){
-  var yrSel=document.getElementById('dsTallyYrSel');
-  var year=yrSel?parseInt(yrSel.value):new Date().getFullYear();
+window.dsPrintRangeOpen=function(){
+  var yr=new Date().getFullYear();
   var useFY=document.getElementById('dsTallyFY')&&document.getElementById('dsTallyFY').classList.contains('on');
-  var period=useFY?'Financial Year '+(year-1)+'/'+year:'Year '+year;
+  var fromEl=document.getElementById('dsPRFrom');
+  var toEl=document.getElementById('dsPRTo');
+  if(useFY){
+    if(fromEl) fromEl.value=(yr-1)+'-07-01';
+    if(toEl)   toEl.value=yr+'-06-30';
+  } else {
+    if(fromEl) fromEl.value=yr+'-01-01';
+    if(toEl)   toEl.value=yr+'-12-31';
+  }
+  document.getElementById('dsPrintRangeModal').style.display='flex';
+};
+
+window.dsPrintRangeGo=function(){
+  var from=document.getElementById('dsPRFrom').value;
+  var to=document.getElementById('dsPRTo').value;
+  if(!from||!to){ alert('Please select a date range.'); return; }
+  document.getElementById('dsPrintRangeModal').style.display='none';
+  dsPrintTally(from,to);
+};
+
+window.dsPrintTally=function(fromDate,toDate){
+  var period;
+  if(fromDate&&toDate){
+    period=fromDate+' — '+toDate;
+  } else {
+    var yrSel=document.getElementById('dsTallyYrSel');
+    var year=yrSel?parseInt(yrSel.value):new Date().getFullYear();
+    var useFY=document.getElementById('dsTallyFY')&&document.getElementById('dsTallyFY').classList.contains('on');
+    period=useFY?'Financial Year '+(year-1)+'/'+year:'Year '+year;
+    fromDate=useFY?(year-1)+'-07-01':year+'-01-01';
+    toDate=useFY?year+'-06-30':year+'-12-31';
+  }
   var allTypes=dsAllTypes();
   var counts={},hrs={};
   allTypes.forEach(function(t){counts[t.id]=0;hrs[t.id]=0;});
   Object.keys(ds.data).forEach(function(dk2){
-    var s=ds.data[dk2],d=new Date(dk2),inRange;
-    if(useFY) inRange=d>=new Date(year-1,6,1)&&d<=new Date(year,5,30);
-    else inRange=dk2.startsWith(String(year)+'-');
+    var s=ds.data[dk2],inRange;
+    inRange=dk2>=fromDate&&dk2<=toDate;
     if(!inRange) return;
     counts[s.type]=(counts[s.type]||0)+1;
     var t=allTypes.find(function(x){return x.id===s.type;});
