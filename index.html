@@ -62,7 +62,7 @@ header {
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 14px 24px;
+  padding: 8px 24px;
   border-bottom: 1px solid var(--border);
   background: var(--surface);
   position: sticky;
@@ -456,10 +456,11 @@ header {
 .ds-ot-modal{position:fixed;inset:0;background:#0008;z-index:700;display:flex;align-items:center;justify-content:center;padding:20px;}
 .ds-ot-box{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:26px;width:320px;max-width:95vw;}
 .ds-ot-box h3{font-size:.9rem;font-weight:700;margin-bottom:14px;color:var(--accent);}
-.ds-bar-layer{position:absolute;inset:0;pointer-events:none;z-index:5;overflow:visible;}
-.ds-counter-dots{position:absolute;bottom:4px;left:4px;right:4px;
-  display:flex;flex-wrap:wrap;gap:1px;align-items:flex-end;pointer-events:all;z-index:7;}
-.ds-counter-dot{font-size:.6rem;line-height:1;cursor:pointer;transition:transform .1s;}
+.ds-bar-layer{position:absolute;inset:0;pointer-events:none;z-index:5;overflow:hidden;}
+.ds-counter-dots{position:absolute;top:3px;left:28px;right:4px;
+  height:22px;display:flex;flex-wrap:wrap;gap:3px;
+  align-items:center;pointer-events:all;z-index:7;}
+.ds-counter-dot{font-size:.75rem;line-height:1;cursor:pointer;transition:transform .1s;}
 .ds-counter-dot:hover{transform:scale(1.2);}
 .ds-counter-add{font-size:.75rem;opacity:.5;cursor:pointer;padding:0 2px;
   border:1px dashed currentColor;border-radius:4px;line-height:1;transition:opacity .15s;}
@@ -488,9 +489,9 @@ header {
 .ds-day-nav-wrap{display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin-left:8px;}
 
 .ds-span-bar{
-  position:absolute; height:24px; border-radius:20px;
-  display:flex; align-items:center; gap:5px;
-  padding:0 10px; font-size:.72rem; font-weight:800;
+  position:absolute; height:18px; border-radius:20px;
+  display:flex; align-items:center; gap:4px;
+  padding:0 7px; font-size:.65rem; font-weight:800;
   white-space:nowrap; pointer-events:all; cursor:default;
   z-index:6; letter-spacing:.04em; text-transform:uppercase;
   border: 1.5px solid currentColor;
@@ -541,7 +542,7 @@ body { display: flex; flex-direction: column; height: 100vh; }
   padding:10px 18px;cursor:pointer;transition:all .2s;letter-spacing:.5px;text-transform:uppercase;}
 .cal-tab-btn.active{color:var(--accent);border-bottom-color:var(--accent);}
 .cal-tab-panel{display:none;flex:1;overflow:hidden;}
-.cal-tab-panel.active{display:flex;flex-direction:column;min-height:0;}
+.cal-tab-panel.active{display:flex;flex:1;flex-direction:column;min-height:0;}
 .tally-page{padding:20px 24px;}
 .tally-page h2{font-family:'Fraunces',serif;font-weight:900;font-size:1.3rem;
   letter-spacing:-.5px;color:var(--accent);margin-bottom:16px;}
@@ -1763,7 +1764,7 @@ function dsRefresh() {
   if(!isStatusTab&&window.calRa) window.calRa(); // only re-render events cal if not on status tab
   var tallyPanel=document.getElementById('calPanelTally');
   if(tallyPanel&&tallyPanel.classList.contains('active')) tmcRenderAll();
-  if(isStatusTab) setTimeout(sCalRender, 50); // re-render status cal
+  if(isStatusTab) setTimeout(sCalRender,50);
 }
 
 window.dsAfterRender=function(){
@@ -1773,12 +1774,11 @@ window.dsAfterRender=function(){
 };
 
 function dsInject() {
-  // Don't inject status into events tab
+  // Only run on events tab — status tab has its own injection in sCalRender
   var evPanel=document.getElementById('calPanelCal');
-  if(evPanel&&evPanel.classList.contains('active')) return;
+  if(!evPanel||!evPanel.classList.contains('active')) return;
 
-  var main=document.getElementById('cStatusMain');
-  if(!main||!main.closest('#calPanelStatus')) main=document.getElementById('cMain');
+  var main=document.getElementById('cMain');
   if(!main) return;
   var view=window.calSt?window.calSt.view:'month';
 
@@ -2430,7 +2430,7 @@ function sCalRender(){
     +'<button class="cal-arr" onclick="sCalNav(-1)">&#9664;</button>'
     +'<button class="cal-arr" onclick="sCalNav(1)">&#9654;</button>'
     +'<div class="cal-title">'+title+'</div>'
-    +'<button class="cal-arr" onclick="sCalNav(0)" style="margin-left:auto;font-size:.7rem;padding:4px 10px">Today</button>'
+    +'<div class="pill-group" style="margin-left:auto">'+'<button class="pill-btn active" onclick="sCalNav(0)">Today</button>'+'</div>'
     +'</div>'
     +'<div class="cal-mwrap">'
     +'<div class="cal-m-dr">'
@@ -2522,7 +2522,7 @@ function sCalRender(){
         else{sg2.end=dk;sg2.endCell=cell;}
       });
       if(sg2) segs.push(sg2);
-      var BAR_H=24,BAR_GAP=3,BAR_TOP=28;
+      var BAR_H=18,BAR_GAP=2,BAR_TOP=26;
       segs.forEach(function(sg,si){
         var r1=sg.startCell.getBoundingClientRect(),r2=sg.endCell.getBoundingClientRect();
         var slot=stackCount[sg.start]||0;
@@ -2648,7 +2648,7 @@ function fitMonthGrid(gridId){
   var cells=grid.children.length;
   var rows=Math.ceil(cells/7);
   if(!rows) return;
-  var rowH=Math.floor(available/rows);
+  var rowH=Math.max(90, Math.floor(available/rows));
   grid.style.gridTemplateRows='repeat('+rows+','+rowH+'px)';
 }
 
@@ -2685,8 +2685,6 @@ window.calSwitchTab=function(tab){
     var ae=document.getElementById('sidebarAddEvent'); if(ae) ae.style.display='';
     var ds2=document.getElementById('sidebarDayStatus'); if(ds2) ds2.style.display='none';
     if(typeof sbClearEv==='function') sbClearEv();
-    // Re-fit grid after layout settles
-    setTimeout(function(){ if(window.calRa) window.calRa(); }, 30);
   }
   if(tab==='status'||tab==='tally'){
     var ae2=document.getElementById('sidebarAddEvent'); if(ae2) ae2.style.display='none';
@@ -2819,10 +2817,7 @@ if (_panel) {
 document.addEventListener('DOMContentLoaded', initCalendarWorkingCopy);
 if (document.readyState !== 'loading') initCalendarWorkingCopy();
 window.addEventListener('resize', function(){
-  setTimeout(fitAllMonthGrids,50);
-  // Also re-render status cal if active to force grid refit
-  var stPanel=document.getElementById('calPanelStatus');
-  if(stPanel&&stPanel.classList.contains('active')) setTimeout(sCalRender,60);
+  fitAllMonthGrids();
 });
 </script>
 </body>
