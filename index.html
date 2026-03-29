@@ -546,6 +546,42 @@ body { display: flex; flex-direction: column; height: 100vh; }
   color:var(--accent);letter-spacing:-1px;line-height:1;}
 .tally-card-hrs{font-size:.65rem;color:var(--text-muted);margin-top:2px;text-align:right;}
 
+
+/* ── TALLY PAGE LAYOUT ── */
+.tally-layout{display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap;}
+.tally-left{flex:1;min-width:260px;}
+.tally-right{display:flex;flex-direction:column;gap:16px;min-width:300px;flex:0 0 320px;}
+.tally-mini-cal-wrap{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+.tally-mini-cal-hdr{padding:10px 14px;border-bottom:1px solid var(--border);
+  font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;
+  color:var(--text-muted);display:flex;align-items:center;justify-content:space-between;}
+.tally-mini-cal-hdr .tmc-title{color:var(--text);font-size:.75rem;}
+.tmc-nav{display:flex;gap:4px;}
+.tmc-nav-btn{background:none;border:1px solid var(--border);color:var(--text-muted);
+  border-radius:5px;padding:2px 7px;cursor:pointer;font-size:.7rem;transition:all .15s;}
+.tmc-nav-btn:hover{border-color:var(--accent);color:var(--accent);}
+.tmc-grid{display:grid;grid-template-columns:repeat(7,1fr);}
+.tmc-dow{text-align:center;font-size:.55rem;font-weight:700;color:var(--text-muted);
+  text-transform:uppercase;padding:6px 0;border-bottom:1px solid var(--border);}
+.tmc-cell{min-height:52px;padding:3px 4px;border-right:1px solid var(--border);
+  border-bottom:1px solid var(--border);position:relative;font-size:.62rem;
+  font-weight:700;color:var(--text-muted);cursor:default;}
+.tmc-cell:nth-child(7n){border-right:none;}
+.tmc-cell.other{opacity:.25;}
+.tmc-cell.today .tmc-num{background:var(--accent);color:#0e0e11;
+  border-radius:50%;width:18px;height:18px;display:flex;align-items:center;
+  justify-content:center;margin-bottom:2px;}
+.tmc-num{margin-bottom:2px;}
+.tmc-stamps{display:flex;flex-direction:column;gap:1px;}
+.tmc-stamp{font-size:.6rem;font-weight:700;letter-spacing:.03em;text-transform:uppercase;
+  padding:1px 4px;border-radius:10px;border:1px solid currentColor;
+  background:color-mix(in srgb,currentColor 10%,transparent);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tmc-event{font-size:.58rem;padding:1px 4px;border-radius:3px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:1px;}
+.tmc-counter-dots{display:flex;flex-wrap:wrap;gap:1px;margin-top:2px;}
+.tmc-dot{font-size:.7rem;line-height:1;}
+
 /* ── LOADING ── */
 .loading-overlay { position:fixed; inset:0; background:var(--bg); z-index:999; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:16px; transition:opacity .4s; }
 .loading-overlay.hidden { opacity:0; pointer-events:none; }
@@ -659,7 +695,41 @@ body { display: flex; flex-direction: column; height: 100vh; }
         <label class="print-opt-toggle" id="dsTallyFY2" onclick="this.classList.toggle('on');dsTallyFull()" style="font-size:.65rem;cursor:pointer">📅 Financial Year</label>
         <button class="icon-btn" onclick="dsPrintRangeOpen()" style="font-size:.7rem;padding:5px 12px">🖨️ Print</button>
       </div>
-      <div class="tally-grid" id="dsTallyFull"></div>
+      <div class="tally-layout">
+        <div class="tally-left">
+          <div class="tally-grid" id="dsTallyFull"></div>
+        </div>
+        <div class="tally-right">
+          <!-- Status mini calendar -->
+          <div class="tally-mini-cal-wrap">
+            <div class="tally-mini-cal-hdr">
+              <span style="text-transform:uppercase;letter-spacing:1px;font-size:.62rem">📌 Stamps</span>
+              <div style="display:flex;align-items:center;gap:8px">
+                <div class="tmc-nav">
+                  <button class="tmc-nav-btn" onclick="tmcNav('status',-1)">&#9664;</button>
+                  <span class="tmc-title" id="tmcStatusTitle"></span>
+                  <button class="tmc-nav-btn" onclick="tmcNav('status',1)">&#9654;</button>
+                </div>
+              </div>
+            </div>
+            <div class="tmc-grid" id="tmcStatusDow"></div>
+            <div class="tmc-grid" id="tmcStatusGrid"></div>
+          </div>
+          <!-- Events mini calendar -->
+          <div class="tally-mini-cal-wrap">
+            <div class="tally-mini-cal-hdr">
+              <span style="text-transform:uppercase;letter-spacing:1px;font-size:.62rem">📆 Events</span>
+              <div class="tmc-nav">
+                <button class="tmc-nav-btn" onclick="tmcNav('events',-1)">&#9664;</button>
+                <span class="tmc-title" id="tmcEventsTitle"></span>
+                <button class="tmc-nav-btn" onclick="tmcNav('events',1)">&#9654;</button>
+              </div>
+            </div>
+            <div class="tmc-grid" id="tmcEventsDow"></div>
+            <div class="tmc-grid" id="tmcEventsGrid"></div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -1556,7 +1626,12 @@ window.dsHrsCancel=function(){
 };
 
 // ── Refresh: re-inject badges after calRa renders ──
-function dsRefresh() { if(window.calRa) window.calRa(); }
+function dsRefresh() {
+  if(window.calRa) window.calRa();
+  // Re-render tally mini calendars if tally tab is open
+  var tallyPanel=document.getElementById('calPanelTally');
+  if(tallyPanel&&tallyPanel.classList.contains('active')) tmcRenderAll();
+}
 
 window.dsAfterRender=function(){
   dsInject();
@@ -1596,6 +1671,8 @@ function dsInject() {
   var runs=[];
   allTypes2.forEach(function(typeObj){
     var tid=typeObj.id;
+    // Skip counter and emoji-only types — they render as dots, not bars
+    if(typeObj.isCounter||typeObj.displayMode==='emoji') return;
     // Get all dates that have this type
     var typeDates=allDates.filter(function(dk){
       return dsGetDay(dk).some(function(s){return s.type===tid;});
@@ -1707,7 +1784,7 @@ function dsInject() {
     cell.querySelectorAll('.ds-counter-dots').forEach(function(el){el.remove();});
     var counterStatuses=dsGetDay(dk2c).filter(function(s){
       var tc=dsAllTypes().find(function(x){return x.id===s.type;});
-      return tc&&tc.isCounter;
+      return tc&&(tc.isCounter||tc.displayMode==='emoji');
     });
     if(!counterStatuses.length) return;
     var dotsWrap=document.createElement('div');
@@ -1986,13 +2063,102 @@ document.addEventListener('DOMContentLoaded', function(){
   }
 })
 
+
+// ── Tally mini calendars ──
+var tmcState={
+  status:{y:new Date().getFullYear(),m:new Date().getMonth()},
+  events:{y:new Date().getFullYear(),m:new Date().getMonth()}
+};
+
+window.tmcNav=function(which,dir){
+  var s=tmcState[which];
+  s.m+=dir;
+  if(s.m<0){s.m=11;s.y--;}
+  if(s.m>11){s.m=0;s.y++;}
+  tmcRender(which);
+};
+
+function tmcRender(which){
+  var s=tmcState[which];
+  var y=s.y,m=s.m;
+  var f=new Date(y,m,1),l=new Date(y,m+1,0);
+  var sd=(f.getDay()+6)%7,tot=Math.ceil((sd+l.getDate())/7)*7;
+  var now=new Date();
+  var tk=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+  // Title
+  var titleEl=document.getElementById('tmc'+which.charAt(0).toUpperCase()+which.slice(1)+'Title');
+  if(titleEl) titleEl.textContent=f.toLocaleString('default',{month:'short',year:'numeric'});
+  // DOW headers (only render once)
+  var dowEl=document.getElementById('tmc'+which.charAt(0).toUpperCase()+which.slice(1)+'Dow');
+  if(dowEl&&!dowEl.children.length){
+    dowEl.innerHTML=['M','T','W','T','F','S','S'].map(function(d){
+      return '<div class="tmc-dow">'+d+'</div>';
+    }).join('');
+  }
+  // Grid
+  var gridEl=document.getElementById('tmc'+which.charAt(0).toUpperCase()+which.slice(1)+'Grid');
+  if(!gridEl) return;
+  var cells='';
+  for(var i=0;i<tot;i++){
+    var dn=i-sd+1,v=dn>=1&&dn<=l.getDate();
+    var dk2=v?y+'-'+String(m+1).padStart(2,'0')+'-'+String(dn).padStart(2,'0'):'';
+    var isToday=v&&dk2===tk;
+    var inner='<div class="tmc-num">'+( v?dn:'')+'</div>';
+    if(v&&which==='status'){
+      var statuses=dsGetDay(dk2);
+      var barSts=statuses.filter(function(s){
+        var t=dsAllTypes().find(function(x){return x.id===s.type;});
+        return t&&!t.isCounter&&t.displayMode!=='emoji';
+      });
+      var dotSts=statuses.filter(function(s){
+        var t=dsAllTypes().find(function(x){return x.id===s.type;});
+        return t&&(t.isCounter||t.displayMode==='emoji');
+      });
+      if(barSts.length){
+        inner+='<div class="tmc-stamps">';
+        barSts.forEach(function(s){
+          var t=dsAllTypes().find(function(x){return x.id===s.type;}); if(!t) return;
+          var extra=s.hrs?' '+s.hrs+'h':'';
+          inner+='<div class="tmc-stamp" style="color:'+t.color+'">'+t.icon+' '+t.label+extra+'</div>';
+        });
+        inner+='</div>';
+      }
+      if(dotSts.length){
+        inner+='<div class="tmc-counter-dots">';
+        dotSts.forEach(function(s){
+          var t=dsAllTypes().find(function(x){return x.id===s.type;}); if(!t) return;
+          var cnt=s.count||1;
+          for(var ci=0;ci<Math.min(cnt,6);ci++) inner+='<span class="tmc-dot">'+t.icon+'</span>';
+        });
+        inner+='</div>';
+      }
+    }
+    if(v&&which==='events'){
+      var evs=(window.calSt&&window.calSt.events?window.calSt.events:[]).filter(function(e){
+        return e.date===dk2;
+      }).sort(function(a,b){return (a.st||'').localeCompare(b.st||'');});
+      evs.slice(0,3).forEach(function(e){
+        var tc=e.color?(function(h){var r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16);return(r*299+g*587+b*114)/1000<128?'#fff':'#1a1a2e';})(e.color):'#1a1a2e';
+        inner+='<div class="tmc-event" style="background:'+(e.color||'#c8b8ff')+';color:'+tc+'">'+e.icon+' '+e.title+'</div>';
+      });
+      if(evs.length>3) inner+='<div style="font-size:.55rem;color:var(--text-muted)">+'+( evs.length-3)+' more</div>';
+    }
+    cells+='<div class="tmc-cell'+(v?'':' other')+(isToday?' today':'')+'">'+inner+'</div>';
+  }
+  gridEl.innerHTML=cells;
+}
+
+function tmcRenderAll(){
+  tmcRender('status');
+  tmcRender('events');
+}
 // ── Calendar main tab switcher ──
 window.calSwitchTab=function(tab){
   ['cal','tally'].forEach(function(t){
     document.getElementById('calTab'+t.charAt(0).toUpperCase()+t.slice(1)).classList.toggle('active',t===tab);
     document.getElementById('calPanel'+t.charAt(0).toUpperCase()+t.slice(1)).classList.toggle('active',t===tab);
   });
-  if(tab==='tally'){ dsTallyFull(); dsInitTallyYrSel(); }
+  if(tab==='tally'){ dsTallyFull(); dsInitTallyYrSel(); tmcRenderAll(); }
 };
 
 function dsInitTallyYrSel(){
