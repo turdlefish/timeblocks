@@ -637,8 +637,6 @@ body { display: flex; flex-direction: column; height: 100vh; }
   </div>
   <div style="font-size:0.7rem;color:var(--text-muted);background:var(--surface2);border:1px solid var(--border);padding:4px 12px;border-radius:20px">📅 Calendar — Working Copy</div>
   <div class="header-right">
-    <button class="icon-btn" style="border-color:var(--accent);color:var(--accent)" onclick="calGoToday()">Today</button>
-    <button class="icon-btn" onclick="calOpenAdd()">＋ Event</button>
     <button class="icon-btn" id="themeBtn" onclick="toggleTheme()">☀️ Light</button>
   </div>
 </header>
@@ -667,18 +665,43 @@ body { display: flex; flex-direction: column; height: 100vh; }
         <div class="mini-cal" id="calMiniCal"></div>
       </div>
       <!-- Add Event section — shown in Events tab -->
-      <div class="sidebar-section" id="sidebarAddEvent">
-        <h3>Add Event</h3>
-        <div style="display:flex;flex-direction:column;gap:8px">
-          <input class="form-input" id="quickEvTitle" placeholder="Event title…" maxlength="60"
-            onkeydown="if(event.key==='Enter')quickAddEvent()">
-          <input class="form-input" id="quickEvDate" type="date">
-          <div style="display:flex;gap:6px">
-            <input class="form-input" id="quickEvSt" type="time" value="09:00" style="flex:1">
-            <input class="form-input" id="quickEvEn" type="time" value="10:00" style="flex:1">
+      <div class="sidebar-section" id="sidebarAddEvent" style="overflow-y:auto">
+        <h3 style="display:flex;align-items:center;justify-content:space-between">
+          <span id="sbEvH">New Event</span>
+          <button id="sbEvDel" onclick="sbDelEv()" style="display:none;font-size:.62rem;background:none;border:1px solid #ff6e6e44;color:var(--red);padding:3px 8px;border-radius:6px;cursor:pointer">Delete</button>
+        </h3>
+        <div class="form-row"><label>Title</label><input class="form-input" id="sbEvTitle" placeholder="Event name" maxlength="60"></div>
+        <div class="form-row"><label>Icon</label>
+          <div class="emoji-keyboard-wrap">
+            <div class="emoji-trigger" id="sbEvIconTrig" onclick="openEmojiKeyboard('sbEvIcon')">
+              <span class="trigger-icon" id="sbEvIconPrev">📅</span>
+              <span class="trigger-label" id="sbEvIconLbl">Choose emoji…</span>
+            </div>
+            <div class="emoji-keyboard" id="sbEvIconEmojiKeyboard"></div>
           </div>
-          <button class="add-block-btn" onclick="quickAddEvent()" style="margin-top:4px">＋ Add Event</button>
-          <button class="icon-btn" onclick="calOpenAdd()" style="width:100%;text-align:center">⚙ Full Details…</button>
+        </div>
+        <div class="form-row"><label>Colour</label>
+          <div class="emoji-keyboard-wrap">
+            <div class="emoji-trigger" id="sbEvColorTrig" onclick="openColorKeyboard('sbEvColor')">
+              <span id="sbEvColorSw" style="width:18px;height:18px;border-radius:4px;background:#c8b8ff;display:inline-block;flex-shrink:0"></span>
+              <span class="trigger-label" id="sbEvColorLbl">Choose colour…</span>
+            </div>
+            <div class="color-keyboard" id="sbEvColorColorKeyboard"></div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <div class="form-row" style="flex:1"><label>Start Date</label><input class="form-input" id="sbEvDate" type="date"></div>
+          <div class="form-row" style="flex:1"><label>End Date</label><input class="form-input" id="sbEvDateEnd" type="date"></div>
+        </div>
+        <div style="display:flex;gap:8px" id="sbEvTmRow">
+          <div class="form-row" style="flex:1"><label>Start</label><input class="form-input" id="sbEvSt" type="time" value="09:00"></div>
+          <div class="form-row" style="flex:1"><label>End</label><input class="form-input" id="sbEvEn" type="time" value="10:00"></div>
+        </div>
+        <div class="form-row"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:.75rem;font-weight:400"><input type="checkbox" id="sbEvAD" onchange="sbTogAD(this.checked)"> All day event</label></div>
+        <div class="form-row"><label>Notes</label><textarea class="form-input" id="sbEvNote" rows="2" style="resize:vertical" placeholder="Optional…"></textarea></div>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button class="btn-cancel" onclick="sbClearEv()" style="flex:1">Clear</button>
+          <button class="add-block-btn" onclick="sbSaveEv()" style="flex:2">＋ Save Event</button>
         </div>
       </div>
       <!-- Day Status section — shown in Status tab -->
@@ -1060,6 +1083,7 @@ function getSelectedColor(ctx) {
   if(ctx==='editBlockColor') return appState.editSelectedColor;
   if(ctx==='tplColor')       return appState.tplSelectedColor;
   if(ctx==='editTplColor')   return appState.editTplSelectedColor;
+  if(ctx==='sbEvColor')      return sbEvColor;
   return '#c8b8ff';
 }
 function selectCatColor(ctx,color) {
@@ -1070,6 +1094,7 @@ function selectCatColor(ctx,color) {
   else if (ctx==='editBlockColor') { appState.editSelectedColor=color; upd('editBlockColorPreview'); }
   else if (ctx==='tplColor')       { appState.tplSelectedColor=color; upd('tplColorPreview'); }
   else if (ctx==='editTplColor')   { appState.editTplSelectedColor=color; upd('editTplColorPreview'); }
+  else if (ctx==='sbEvColor')       { sbEvColor=color; var sw=document.getElementById('sbEvColorSw'); if(sw) sw.style.background=color; var cl=document.getElementById('sbEvColorLbl'); if(cl) cl.textContent=''; }
   renderColorKBGrid(ctx);
 }
 
@@ -1152,6 +1177,7 @@ function getSelectedEmoji(ctx) {
   if (ctx==='tplIcon')       return appState.tplSelectedIcon;
   if (ctx==='editTplIcon')   return appState.editTplSelectedIcon;
   if (ctx==='dsCustomEmoji') return dsCustomSelectedEmoji;
+  if (ctx==='sbEvIcon') return sbEvIcon;
   return '📋';
 }
 function selectEmoji(ctx, emoji) {
@@ -1168,6 +1194,11 @@ function selectEmoji(ctx, emoji) {
   else if (ctx==='dsCustomEmoji') {
     dsCustomSelectedEmoji = emoji;
     var p=document.getElementById('dsCustomEmojiPreview'); if(p) p.textContent=emoji;
+  }
+  else if (ctx==='sbEvIcon') {
+    sbEvIcon = emoji;
+    var p2=document.getElementById('sbEvIconPrev'); if(p2) p2.textContent=emoji;
+    var l2=document.getElementById('sbEvIconLbl'); if(l2) l2.textContent='';
   }
   renderEmojiGrid(ctx);
 }
@@ -2219,6 +2250,84 @@ window.quickAddEvent=function(){
   if(typeof cSave==='function') cSave();
   if(window.calRa) window.calRa();
 };
+
+// ── Sidebar event form ──
+var sbEvId = null;  // null = new, string = editing
+var sbEvIcon = '📅';
+var sbEvColor = '#c8b8ff';
+
+function sbClearEv() {
+  sbEvId = null; sbEvIcon = '📅'; sbEvColor = '#c8b8ff';
+  var ids = ['sbEvTitle','sbEvNote'];
+  ids.forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
+  var d = document.getElementById('sbEvDate');
+  if(d){ var n=new Date(); d.value=n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0'); }
+  var de = document.getElementById('sbEvDateEnd'); if(de) de.value='';
+  var st = document.getElementById('sbEvSt'); if(st) st.value='09:00';
+  var en = document.getElementById('sbEvEn'); if(en) en.value='10:00';
+  var ad = document.getElementById('sbEvAD'); if(ad) ad.checked=false;
+  var tr = document.getElementById('sbEvTmRow'); if(tr) tr.style.display='';
+  var prev = document.getElementById('sbEvIconPrev'); if(prev) prev.textContent='📅';
+  var sw = document.getElementById('sbEvColorSw'); if(sw) sw.style.background='#c8b8ff';
+  var lbl = document.getElementById('sbEvColorLbl'); if(lbl) lbl.textContent='Choose colour…';
+  var h = document.getElementById('sbEvH'); if(h) h.textContent='New Event';
+  var del = document.getElementById('sbEvDel'); if(del) del.style.display='none';
+}
+
+window.sbTogAD = function(checked) {
+  var tr = document.getElementById('sbEvTmRow');
+  if(tr) tr.style.display = checked ? 'none' : '';
+};
+
+window.sbSaveEv = function() {
+  var title = document.getElementById('sbEvTitle').value.trim();
+  if(!title){ document.getElementById('sbEvTitle').focus(); return; }
+  var dateEl = document.getElementById('sbEvDate');
+  var date = dateEl ? dateEl.value : '';
+  if(!date){ if(dateEl) dateEl.focus(); return; }
+  var e = {
+    id: sbEvId || ('ev'+Date.now()),
+    title: title,
+    icon: sbEvIcon,
+    color: sbEvColor,
+    date: date,
+    dateEnd: document.getElementById('sbEvDateEnd').value || '',
+    st: document.getElementById('sbEvSt').value,
+    en: document.getElementById('sbEvEn').value,
+    allDay: document.getElementById('sbEvAD').checked,
+    note: document.getElementById('sbEvNote').value.trim()
+  };
+  if(sbEvId) {
+    var i = cSt.events.findIndex(function(x){ return x.id===sbEvId; });
+    if(i>=0) cSt.events[i]=e;
+  } else {
+    cSt.events.push(e);
+  }
+  if(typeof cSave==='function') cSave();
+  if(window.calRa) window.calRa();
+  sbClearEv();
+};
+
+window.sbDelEv = function() {
+  if(!sbEvId) return;
+  cSt.events = cSt.events.filter(function(e){ return e.id!==sbEvId; });
+  if(typeof cSave==='function') cSave();
+  if(window.calRa) window.calRa();
+  sbClearEv();
+};
+
+// Hook sbEvIcon into emoji picker
+function getSelectedEmoji_orig(ctx){ return getSelectedEmoji(ctx); }
+var _origGetSel = window.getSelectedEmoji || function(){return '📋';};
+// Patch getSelectedEmoji to handle sbEvIcon
+var _origGetEmoji = null;
+// Actually patch via the existing selectEmoji system
+// We need to handle 'sbEvIcon' ctx in selectEmoji and getSelectedEmoji
+
+// Hook into sbEvColor via the colorKeyboard system
+// selectCatColor already handles context-based color setting
+// We add sbEvColor handling:
+
 // ── Tally mini calendars ──
 var tmcState={
   status:{y:new Date().getFullYear(),m:new Date().getMonth()},
@@ -2563,11 +2672,9 @@ window.calSwitchTab=function(tab){
     document.querySelectorAll('#cMain .cal-m-cell').forEach(function(c){ c.style.cursor=''; });
     var ae=document.getElementById('sidebarAddEvent'); if(ae) ae.style.display='';
     var ds2=document.getElementById('sidebarDayStatus'); if(ds2) ds2.style.display='none';
-    // Set today's date in quick add
-    var qd=document.getElementById('quickEvDate');
-    if(qd&&!qd.value){
-      var n=new Date(); qd.value=n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0');
-    }
+    if(typeof sbClearEv==='function') sbClearEv();
+    // Re-fit grid after layout settles
+    setTimeout(function(){ if(window.calRa) window.calRa(); }, 30);
   }
   if(tab==='status'||tab==='tally'){
     var ae2=document.getElementById('sidebarAddEvent'); if(ae2) ae2.style.display='none';
@@ -2660,9 +2767,7 @@ async function initCalendarWorkingCopy() {
   if (window.calRa) window.calRa();
   if (typeof dsBuild === 'function') dsBuild();
   if (typeof dsMiniCal === 'function') dsMiniCal();
-  // Set today's date in quick event add
-  var qd=document.getElementById('quickEvDate');
-  if(qd){ var n=new Date(); qd.value=n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0'); }
+  if(typeof sbClearEv==='function') sbClearEv();
   if (typeof dsTally === 'function') dsTally();
   setTimeout(() => { if (typeof dsInject === 'function') dsInject(); }, 100);
 
