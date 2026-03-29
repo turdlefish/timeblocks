@@ -446,17 +446,59 @@ header {
 .ds-ot-box h3{font-size:.9rem;font-weight:700;margin-bottom:14px;color:var(--accent);}
 .cal-m-grid{position:relative;}
 .ds-bar-layer{position:absolute;inset:0;pointer-events:none;z-index:5;overflow:visible;}
-.ds-span-bar{
-  position:absolute; height:22px; border-radius:20px;
-  display:flex; align-items:center; gap:4px;
-  padding:0 10px; font-size:.74rem; font-weight:700;
-  box-shadow:0 2px 6px #0004; overflow:hidden;
-  white-space:nowrap; pointer-events:all; cursor:default;
-  z-index:6; letter-spacing:.01em;
-  transition:opacity .15s;
+.ds-col-wrap{display:flex;flex-wrap:wrap;gap:3px;padding:3px 4px;border-bottom:1px solid var(--border);min-height:28px;}
+.ds-col-chip{
+  display:inline-flex;align-items:center;gap:4px;
+  padding:2px 8px;border-radius:5px;font-size:.62rem;
+  font-weight:800;white-space:nowrap;cursor:pointer;
+  letter-spacing:.04em;text-transform:uppercase;
+  border:1.5px solid currentColor;
+  background:transparent;
+  box-shadow:inset 0 0 0 2000px color-mix(in srgb,currentColor 12%,transparent);
+  opacity:.82;transition:opacity .15s;position:relative;
 }
-.ds-span-bar:hover{ opacity:.85; }
-.ds-span-icon{ font-size:.85rem; flex-shrink:0; }
+.ds-col-chip:hover{opacity:.8;}
+.ds-chip-del{
+  display:none;width:12px;height:12px;border-radius:50%;
+  background:#0003;border:none;color:inherit;
+  font-size:.55rem;cursor:pointer;align-items:center;
+  justify-content:center;padding:0;margin-left:1px;
+  font-weight:900;line-height:1;
+}
+.ds-col-chip:hover .ds-chip-del{display:inline-flex;}
+.ds-day-nav-wrap{display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin-left:8px;}
+
+.ds-span-bar{
+  position:absolute; height:24px; border-radius:6px;
+  display:flex; align-items:center; gap:5px;
+  padding:0 9px; font-size:.72rem; font-weight:800;
+  white-space:nowrap; pointer-events:all; cursor:default;
+  z-index:6; letter-spacing:.04em; text-transform:uppercase;
+  /* Stamp feel: colored border, slight opacity, subtle inner texture */
+  border: 2px solid currentColor;
+  opacity: 0.82;
+  background: transparent !important;
+  /* color is set inline as t.tc — the text/border color */
+  box-shadow: inset 0 0 0 2000px color-mix(in srgb, currentColor 15%, transparent);
+  transition: opacity .15s;
+  overflow: visible;
+}
+.ds-span-bar:hover{ opacity:1; }
+.ds-span-bar:hover{ opacity:.9; }
+.ds-bar-del{
+  display:none; position:absolute; right:6px; top:50%;
+  transform:translateY(-50%);
+  width:16px; height:16px; border-radius:50%;
+  background:#0004; border:none; color:inherit;
+  font-size:.6rem; line-height:1; cursor:pointer;
+  align-items:center; justify-content:center;
+  font-weight:900; padding:0;
+}
+.ds-span-bar:hover .ds-bar-del{ display:flex; }
+.ds-span-icon{
+  font-size:1rem; flex-shrink:0;
+  filter: drop-shadow(0 1px 1px #0003);
+}
 .ds-span-label{ overflow:hidden; text-overflow:ellipsis; }
 
 
@@ -1223,6 +1265,14 @@ ds.custom = [];
 function dsGetDay(dk2){ var v=ds.data[dk2]; if(!v) return []; return Array.isArray(v)?v:[v]; }
 function dsSetDay(dk2,arr){ if(!arr||!arr.length) delete ds.data[dk2]; else ds.data[dk2]=arr; }
 
+// Delete a single status type from a date
+window.dsDeleteStatus=function(dk2,typeId){
+  var arr=dsGetDay(dk2).filter(function(s){return s.type!==typeId;});
+  dsSetDay(dk2,arr);
+  dsSave(); dsRefresh(); dsTally(); dsMiniCal();
+};
+
+
 
 function dsAllTypes() {
   return DS_TYPES.concat(ds.custom);
@@ -1543,68 +1593,100 @@ function dsInject() {
 
       var bar=document.createElement('div');
       bar.className='ds-span-bar';
-      bar.title=titleText;
+      bar.title=titleText+' (click ✕ to remove)';
+      // Stamp: use color as ink color, CSS handles tinted fill via box-shadow
       bar.style.cssText=(
         'top:'+top+'px;left:'+left+'px;width:'+width+'px;height:'+BAR_H+'px;'
-        +'background:'+t.color+';color:'+t.tc+';'
+        +'color:'+t.color+';position:absolute;'
       );
-      if(si===0){
-        bar.innerHTML='<span class="ds-span-icon">'+t.icon+'</span>'
-          +'<span class="ds-span-label">'+t.label+extraText+'</span>';
-      } else {
-        bar.innerHTML='<span class="ds-span-icon">'+t.icon+'</span>';
-      }
+      var labelHtml=(si===0)
+        ?'<span class="ds-span-icon">'+t.icon+'</span><span class="ds-span-label">'+t.label+extraText+'</span>'
+        :'<span class="ds-span-icon">'+t.icon+'</span>';
+      // Delete button removes this type from ALL dates in the run
+      var delDates=run.dates.join(',');
+      var delBtn='<button class="ds-bar-del" title="Remove" '
+        +'onclick="event.stopPropagation();(function(){';
+      delBtn+='var dates=\''+delDates+'\'.split(\',\');';
+      delBtn+='dates.forEach(function(d){dsDeleteStatus(d,\''+run.type+'\');});';
+      delBtn+='})()" >×</button>';
+      bar.innerHTML=labelHtml+delBtn;
       layer.appendChild(bar);
     });
   });
 
 
-  // Week: banner at top of each day column
+  // Week: chips at top of each day column header
+  main.querySelectorAll('.cal-w-ch').forEach(function(ch){
+    ch.querySelectorAll('.ds-col-wrap').forEach(function(el){el.remove();});
+  });
   main.querySelectorAll('.cal-w-col[data-date]').forEach(function(col){
     var dk2=col.dataset.date;
-    var old=col.querySelector('.ds-col-wrap'); if(old) old.remove();
-    var s=ds.data[dk2]; if(!s) return;
-    var t=dsAllTypes().find(function(x){return x.id===s.type;}); if(!t) return;
-    var wrap=document.createElement('div');
-    wrap.className='ds-col-wrap';
-    wrap.style.cssText='padding:2px 4px;font-size:.6rem;font-weight:700;background:'+t.color+';color:'+t.tc;
-    wrap.textContent=t.icon+' '+t.label+(s.hrs?' ('+s.hrs+'h)':'');
-    col.insertBefore(wrap,col.firstChild);
+    // Remove old wrap from col
+    col.querySelectorAll('.ds-col-wrap').forEach(function(el){el.remove();});
+    // Find the corresponding header cell
+    var hdr=main.querySelector('.cal-w-hdr');
+    var colIdx=Array.from(main.querySelectorAll('.cal-w-col')).indexOf(col);
+    var hdrCells=hdr?Array.from(hdr.querySelectorAll('.cal-w-ch')):[];
+    var hdrCell=hdrCells[colIdx];
+    var statuses=dsGetDay(dk2);
+    if(statuses.length&&hdrCell){
+      var wrap=document.createElement('div');
+      wrap.className='ds-col-wrap';
+      statuses.forEach(function(s){
+        var t=dsAllTypes().find(function(x){return x.id===s.type;}); if(!t) return;
+        var extra=s.hrs?' '+s.hrs+'h':'';
+        var chip=document.createElement('span');
+        chip.className='ds-col-chip';
+        chip.style.cssText='color:'+t.color+';';
+        chip.title=t.label+(s.hrs?' ('+s.hrs+'h)':'')+(s.desc?' — '+s.desc:'');
+        chip.innerHTML=t.icon+' '+t.label+extra
+          +'<button class="ds-chip-del" title="Remove" '
+          +'onclick="event.stopPropagation();dsDeleteStatus(\''+dk2+'\',\''+s.type+'\')">×</button>';
+        wrap.appendChild(chip);
+      });
+      hdrCell.appendChild(wrap);
+    }
     // Click to stamp in week view
     col.addEventListener('click',function(e){
-      if(!ds.active||e.target.closest('.cal-w-ev')) return;
+      if(!ds.active||e.target.closest('.cal-w-ev')||e.target.closest('.ds-chip-del')) return;
       e.stopPropagation(); dsApply(dk2);
     },true);
   });
 
-  // Day: badge in nav bar
+  // Day: chips in nav bar
   var nav=main.querySelector('.cal-nav');
   if(nav){
-    var old2=nav.querySelector('.ds-day-nav'); if(old2) old2.remove();
-    // Get current day date from cDCol data or from calSt
+    nav.querySelectorAll('.ds-day-nav').forEach(function(el){el.remove();});
     var dk2d='';
     var dc=document.getElementById('cDCol');
     if(dc&&dc.dataset.date) dk2d=dc.dataset.date;
     if(!dk2d&&window.calSt&&window.calSt.dd){
-      var d=window.calSt.dd;
-      dk2d=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+      var dd2=window.calSt.dd;
+      dk2d=dd2.getFullYear()+'-'+String(dd2.getMonth()+1).padStart(2,'0')+'-'+String(dd2.getDate()).padStart(2,'0');
     }
     if(dk2d){
-      var s2=ds.data[dk2d];
-      if(s2){
-        var t2=dsAllTypes().find(function(x){return x.id===s2.type;});
-        if(t2){
-          var b=document.createElement('span');
-          b.className='ds-day-nav';
-          b.innerHTML=' <span class="ds-badge" style="background:'+t2.color+';color:'+t2.tc+';font-size:.7rem;padding:2px 8px;border-radius:10px;font-weight:700">'+t2.icon+' '+t2.label+(s2.hrs?' ('+s2.hrs+'h)':'')+'</span>';
-          nav.appendChild(b);
-        }
+      var dayStatuses=dsGetDay(dk2d);
+      if(dayStatuses.length){
+        var navWrap=document.createElement('div');
+        navWrap.className='ds-day-nav ds-day-nav-wrap';
+        dayStatuses.forEach(function(s2){
+          var t2=dsAllTypes().find(function(x){return x.id===s2.type;}); if(!t2) return;
+          var extra2=s2.hrs?' '+s2.hrs+'h':'';
+          var chip2=document.createElement('span');
+          chip2.className='ds-col-chip';
+          chip2.style.cssText='color:'+t2.color+';font-size:.65rem;';
+          chip2.title=t2.label+(s2.hrs?' ('+s2.hrs+'h)':'')+(s2.desc?' — '+s2.desc:'');
+          chip2.innerHTML=t2.icon+' '+t2.label+extra2
+            +'<button class="ds-chip-del" title="Remove" '
+            +'onclick="event.stopPropagation();dsDeleteStatus(\''+dk2d+'\',\''+s2.type+'\')">×</button>';
+          navWrap.appendChild(chip2);
+        });
+        nav.appendChild(navWrap);
       }
-      // Click day col to stamp
       var dcol=document.getElementById('cDCol');
       if(dcol){
         dcol.addEventListener('click',function(e){
-          if(!ds.active||e.target.closest('.cal-d-ev')) return;
+          if(!ds.active||e.target.closest('.cal-d-ev')||e.target.closest('.ds-chip-del')) return;
           e.stopPropagation(); dsApply(dk2d);
         },true);
       }
