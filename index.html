@@ -2182,7 +2182,7 @@ function sCalRender(){
     var isToday=v&&dk2===tk;
     var wk=Math.ceil((sd+dn)/7);
     h+='<div class="cal-m-cell'+(v?'':' cal-oth')+(isToday?' cal-tod':'')+'"'
-+(v?' onclick="cGoDay(\''+dk2+'\')"+(ds.active?' style="cursor:crosshair"':'')+'':'')
++(v?' onclick="cGoDay(\''+dk2+'\')" style="'+(ds.active?'cursor:crosshair':'')+'"':'')
       +'>'
       +'<div class="cal-m-num">'+(v?dn:'')+'</div>'
       +(v&&i%7===0?'<div class="cal-m-wk">W'+wk+'</div>':'')
