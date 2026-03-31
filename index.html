@@ -4516,23 +4516,25 @@ async function initApp() {
 }
 
 async function init() {
-  // TEST MODE — auth bypassed, no network calls
-  authUser = { username: 'testuser', ws: 'testuser' };
-  document.getElementById('authScreen').style.display = 'none';
-  if (!appState.categories.length) seedDefaults();
-  const cp = document.getElementById('schedColorPreview');
-  if (cp) cp.style.background = appState.selectedColor;
-  const ip = document.getElementById('schedIconPreview');
-  if (ip) ip.textContent = appState.selectedIcon;
-  const ni = document.getElementById('myNameInput');
-  if (ni) { ni.value = 'testuser'; appState.myName = 'testuser'; }
-  renderSidebarTemplates(); renderTabs(); renderGrid();
-  renderCatFilter(); renderBoard(); updateUndoBtn();
-  switchTab('schedule');
-  const overlay = document.getElementById('loadingOverlay');
-  overlay.classList.add('hidden');
-  setTimeout(() => overlay.style.display = 'none', 300);
-  setSyncing('live');
+  const session = localStorage.getItem('tb_session');
+  if (session) {
+    try {
+      authUser = JSON.parse(session);
+      document.getElementById('authScreen').style.display = 'none';
+      await initApp();
+    } catch(e) {
+      localStorage.removeItem('tb_session');
+      document.getElementById('authScreen').style.display = '';
+      const overlay = document.getElementById('loadingOverlay');
+      overlay.classList.add('hidden');
+      setTimeout(() => overlay.style.display = 'none', 300);
+    }
+  } else {
+    document.getElementById('authScreen').style.display = '';
+    const overlay = document.getElementById('loadingOverlay');
+    overlay.classList.add('hidden');
+    setTimeout(() => overlay.style.display = 'none', 300);
+  }
 }
 init();
 // ══════════════════════════════════════════
