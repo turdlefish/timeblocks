@@ -2818,19 +2818,12 @@ async function sbSet(key, value) {
     'apikey': SB_KEY,
     'Authorization': `Bearer ${SB_KEY}`,
     'Content-Type': 'application/json',
-    'Prefer': 'return=minimal'
+    'Prefer': 'resolution=merge-duplicates,return=minimal'
   };
-  // Try PATCH (update existing row) first
-  const patch = await fetch(
-    `${SB_URL}/rest/v1/tb_store?key=eq.${encodeURIComponent(key)}`,
-    { method: 'PATCH', headers, body: JSON.stringify({ value, updated_at: new Date().toISOString() }) }
-  );
-  if (patch.ok) return true;
-  // Row doesn't exist yet — INSERT
-  const ins = await fetch(`${SB_URL}/rest/v1/tb_store`, { method: 'POST', headers, body: payload });
-  if (!ins.ok) {
-    const err = await ins.text().catch(() => String(ins.status));
-    throw new Error('sbSet failed (' + ins.status + '): ' + err);
+  const res = await fetch(`${SB_URL}/rest/v1/tb_store`, { method: 'POST', headers, body: payload });
+  if (!res.ok) {
+    const err = await res.text().catch(() => String(res.status));
+    throw new Error('sbSet failed (' + res.status + '): ' + err);
   }
   return true;
 }
@@ -4996,44 +4989,6 @@ function buildPrintHTML(tables, startMin, endMin) {
     + '<style>' + css + '</style></head><body>'
     + '<div class="pbar"><button onclick="window.print()">&#128438; Print / Save as PDF</button>'
     + '<button class="sec" onclick="window.close()">Close</button></div>'
-
-<!-- Tracker Day Popup (period/wellbeing) -->
-<div id="trDayPopup" style="display:none;position:fixed;inset:0;background:#0008;z-index:700;align-items:center;justify-content:center;padding:16px;">
-  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:22px;width:420px;max-width:95vw;max-height:88vh;overflow-y:auto;">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-      <h2 id="trDayTitle" style="font-size:1rem;font-weight:700;color:var(--accent);margin:0;font-family:'Fraunces',serif;"></h2>
-      <button onclick="trDayClose()" style="background:none;border:none;color:var(--text-muted);font-size:1.3rem;cursor:pointer;line-height:1;">✕</button>
-    </div>
-    <div id="trDayTypes" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;"></div>
-    <div>
-      <label style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-muted);display:block;margin-bottom:6px;">Notes</label>
-      <textarea id="trDayNote" rows="3" class="form-input" placeholder="Add notes for this day…" style="resize:vertical;width:100%;box-sizing:border-box;"></textarea>
-    </div>
-    <div style="display:flex;gap:8px;margin-top:14px;">
-      <button class="btn-cancel" onclick="trDayClose()" style="flex:1;">Close</button>
-      <button class="btn-primary" onclick="trDaySave()" style="flex:2;">Save</button>
-    </div>
-  </div>
-</div>
-
-<!-- Status Tally Modal -->
-<div id="statusTallyModal" style="display:none;position:fixed;inset:0;background:#0008;z-index:700;align-items:center;justify-content:center;padding:20px;">
-  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;width:500px;max-width:95vw;max-height:88vh;overflow-y:auto;">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
-      <h2 style="font-size:1rem;font-weight:700;color:var(--accent);margin:0;font-family:'Fraunces',serif;">📊 Status Tally</h2>
-      <button onclick="document.getElementById('statusTallyModal').style.display='none'" style="background:none;border:none;color:var(--text-muted);font-size:1.3rem;cursor:pointer;">✕</button>
-    </div>
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
-      <select id="stYrSel" onchange="renderStatusTally()" style="font-size:.72rem;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 10px;cursor:pointer"></select>
-      <label class="print-opt-toggle" id="stFY" onclick="this.classList.toggle('on');renderStatusTally()" style="font-size:.65rem;cursor:pointer">📅 Financial Year</label>
-      <button class="icon-btn" onclick="dsPrintRangeOpen()" style="font-size:.7rem;padding:5px 12px;margin-left:auto;">🖨️ Print</button>
-    </div>
-    <div class="tally-grid" id="stTallyGrid"></div>
-  </div>
-</div>
-</body>
-</html>
-
     + pagesHTML + '</body></html>';
 }
 
@@ -6839,6 +6794,41 @@ window.addEventListener('resize', function(){
 });
 </script>
 
+
+<!-- Tracker Day Popup (period/wellbeing) -->
+<div id="trDayPopup" style="display:none;position:fixed;inset:0;background:#0008;z-index:700;align-items:center;justify-content:center;padding:16px;">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:22px;width:420px;max-width:95vw;max-height:88vh;overflow-y:auto;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+      <h2 id="trDayTitle" style="font-size:1rem;font-weight:700;color:var(--accent);margin:0;font-family:'Fraunces',serif;"></h2>
+      <button onclick="trDayClose()" style="background:none;border:none;color:var(--text-muted);font-size:1.3rem;cursor:pointer;line-height:1;">✕</button>
+    </div>
+    <div id="trDayTypes" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;"></div>
+    <div>
+      <label style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-muted);display:block;margin-bottom:6px;">Notes</label>
+      <textarea id="trDayNote" rows="3" class="form-input" placeholder="Add notes for this day…" style="resize:vertical;width:100%;box-sizing:border-box;"></textarea>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:14px;">
+      <button class="btn-cancel" onclick="trDayClose()" style="flex:1;">Close</button>
+      <button class="btn-primary" onclick="trDaySave()" style="flex:2;">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Status Tally Modal -->
+<div id="statusTallyModal" style="display:none;position:fixed;inset:0;background:#0008;z-index:700;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;width:500px;max-width:95vw;max-height:88vh;overflow-y:auto;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <h2 style="font-size:1rem;font-weight:700;color:var(--accent);margin:0;font-family:'Fraunces',serif;">📊 Status Tally</h2>
+      <button onclick="document.getElementById('statusTallyModal').style.display='none'" style="background:none;border:none;color:var(--text-muted);font-size:1.3rem;cursor:pointer;">✕</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
+      <select id="stYrSel" onchange="renderStatusTally()" style="font-size:.72rem;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 10px;cursor:pointer"></select>
+      <label class="print-opt-toggle" id="stFY" onclick="this.classList.toggle('on');renderStatusTally()" style="font-size:.65rem;cursor:pointer">📅 Financial Year</label>
+      <button class="icon-btn" onclick="dsPrintRangeOpen()" style="font-size:.7rem;padding:5px 12px;margin-left:auto;">🖨️ Print</button>
+    </div>
+    <div class="tally-grid" id="stTallyGrid"></div>
+  </div>
+</div>
 
 <!-- PRINT MODAL -->
 <div class="modal-overlay" id="printModal">
