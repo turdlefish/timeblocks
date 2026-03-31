@@ -2304,6 +2304,17 @@ body { display: flex; flex-direction: column; height: 100vh; }
           <div class="form-row" style="flex:1"><label>End</label><input class="form-input" id="sbEvEn" type="time" value="10:00"></div>
         </div>
         <div class="form-row"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:.75rem;font-weight:400"><input type="checkbox" id="sbEvAD" onchange="sbTogAD(this.checked)"> All day event</label></div>
+        <div class="form-row"><label>Repeat</label>
+          <select class="form-input" id="sbEvRecur" style="font-size:.75rem">
+            <option value="">No repeat</option>
+            <option value="daily">Daily</option>
+            <option value="weekly">Weekly</option>
+            <option value="biweekly">Every 2 weeks</option>
+            <option value="monthly">Monthly</option>
+            <option value="yearly">Yearly</option>
+          </select>
+        </div>
+        <div class="form-row" id="sbEvRecurEndRow" style="display:none"><label>Repeat until</label><input class="form-input" id="sbEvRecurEnd" type="date"></div>
         <div class="form-row"><label>Notes</label><textarea class="form-input" id="sbEvNote" rows="2" style="resize:vertical" placeholder="Optional…"></textarea></div>
         <div style="display:flex;gap:8px;margin-top:8px">
           <button class="btn-cancel" onclick="sbClearEv()" style="flex:1">Clear</button>
@@ -2495,8 +2506,15 @@ body { display: flex; flex-direction: column; height: 100vh; }
           </label>
         </div>
       </div>
-
-
+      <div style="margin-bottom:12px">
+        <label style="display:flex;align-items:center;gap:8px;font-size:.72rem;color:var(--text-muted);cursor:pointer;padding:8px 10px;border:1px solid var(--border);border-radius:6px">
+          <input type="checkbox" id="dsCustomCounter"> 🔢 Counter — tap to add multiple per day (e.g. pills, water)
+        </label>
+      </div>
+      <button class="btn-primary" onclick="dsCustomAdd()" style="width:100%">+ Add Status</button>
+    </div>
+  </div>
+</div>
 
 <!-- ═══════════════ MODALS ═══════════════ -->
 
@@ -4547,11 +4565,27 @@ function cP2(n){return String(n).padStart(2,'0');}
 function cDark(h){var r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16);return(r*299+g*587+b*114)/1000<128;}
 function cEsc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function cWkStart(d){var x=new Date(d);x.setDate(x.getDate()-((x.getDay()+6)%7));x.setHours(0,0,0,0);return x;}
+function cEvMatchesDate(e,k){
+  if(e.date===k) return true;
+  if(e.dateEnd&&e.dateEnd>e.date) return k>=e.date&&k<=e.dateEnd;
+  if(!e.recur||!e.date) return false;
+  if(k<e.date) return false;
+  if(e.recurEnd&&k>e.recurEnd) return false;
+  var d0=new Date(e.date+'T00:00:00'),d1=new Date(k+'T00:00:00');
+  var diff=Math.round((d1-d0)/86400000);
+  if(diff<0) return false;
+  switch(e.recur){
+    case 'daily': return true;
+    case 'weekly': return diff%7===0;
+    case 'biweekly': return diff%14===0;
+    case 'monthly': return d0.getDate()===d1.getDate();
+    case 'yearly': return d0.getMonth()===d1.getMonth()&&d0.getDate()===d1.getDate();
+    default: return false;
+  }
+}
 function cEvDay(k){
   return cSt.events.filter(function(e){
-    if(e.date===k) return true;
-    if(e.dateEnd&&e.dateEnd>e.date) return k>=e.date&&k<=e.dateEnd;
-    return false;
+    return cEvMatchesDate(e,k);
   }).sort(function(a,b){return(a.st||'').localeCompare(b.st||'');});
 }
 function cG(id){return document.getElementById(id);}
@@ -4746,9 +4780,39 @@ function cDEvPD(e){if(e.button!==0)return;cdD.id=e.currentTarget.dataset.id;cdD.
 function cDEvPM(e){if(!cdD.active&&Math.abs(e.clientY-cdD.sY)>5){cdD.active=true;var ev=cSt.events.find(function(x){return x.id===cdD.id;});if(ev){var tc=cDark(ev.color)?'#fff':'#2d2a3e';var gh=cG('cGhost');gh.style.cssText='display:flex;background:'+ev.color+';color:'+tc+';';gh.textContent=ev.icon+' '+ev.title;}cdD.el.classList.add('cdrag');}if(!cdD.active)return;var gh=cG('cGhost');gh.style.left=(e.clientX+12)+'px';gh.style.top=(e.clientY-12)+'px';var col=cG('cDCol'),sg=cG('cDSG');if(col&&sg){var cr=col.getBoundingClientRect(),snap=Math.round(((e.clientY-cdD.oY-cr.top)/cr.height*1440)/15)*15,cl=Math.max(0,Math.min(snap,1380));sg.style.display='block';sg.style.top=(cl/1440*cr.height)+'px';var sl=sg.querySelector('.sl');if(sl)sl.textContent=cP2(Math.floor(cl/60))+':'+cP2(cl%60);}}
 function cDEvPU(e){cdD.el.removeEventListener('pointermove',cDEvPM);cdD.el.removeEventListener('pointerup',cDEvPU);cdD.el.removeEventListener('pointercancel',cDEvPU);var gh=cG('cGhost');gh.style.display='none';var sg=cG('cDSG');if(sg)sg.style.display='none';if(!cdD.active){cdD.el.classList.remove('cdrag');cdD.active=false;return;}cdD.el.classList.remove('cdrag');var col=cG('cDCol');if(col){var ev=cSt.events.find(function(x){return x.id===cdD.id;});if(ev){var cr=col.getBoundingClientRect(),snap=Math.round(((e.clientY-cdD.oY-cr.top)/cr.height*1440)/15)*15,cl=Math.max(0,Math.min(snap,1380)),dur=cTMin(ev.en)-cTMin(ev.st);ev.st=cMTim(cl);ev.en=cMTim(Math.min(cl+Math.max(dur,30),1440));cRa();cSave();}}cdD.active=false;cdD.id=null;}
 
-function cOpenAdd(pd,pt){cSt.eid=null;cSt.icon='📅';cSt.color='#c8b8ff';cG('cEvH').textContent='New Event';cG('cEvTitle').value='';cG('cEvNote').value='';cG('cEvAD').checked=false;cG('cEvTmRow').style.display='';cG('cEvDel').style.display='none';var _def=pd||cDk(cSt.view==='day'?cSt.dd:cNow);cG('cEvDate').value=_def;if(cG('cEvDateEnd'))cG('cEvDateEnd').value=_def;cG('cEvSt').value=pt||'09:00';cG('cEvEn').value=pt?cP2(parseInt(pt.split(':')[0])+1)+':00':'10:00';cSyncT();cCloseEK();cCloseCK();cG('cEvModal').classList.add('open');}
-window.calOpenAdd = function(){cOpenAdd();};  // exposed for header button
-window.cOe=function(id){var e=cSt.events.find(function(x){return x.id===id;});if(!e)return;cSt.eid=id;cSt.icon=e.icon;cSt.color=e.color;cG('cEvH').textContent='Edit Event';cG('cEvTitle').value=e.title;cG('cEvNote').value=e.note||'';cG('cEvDate').value=e.date;if(cG('cEvDateEnd'))cG('cEvDateEnd').value=e.dateEnd||e.date;cG('cEvSt').value=e.st||'09:00';cG('cEvEn').value=e.en||'10:00';cG('cEvAD').checked=!!e.allDay;cG('cEvTmRow').style.display=e.allDay?'none':'';cG('cEvDel').style.display='';cSyncT();cCloseEK();cCloseCK();cG('cEvModal').classList.add('open');};
+function cOpenAdd(pd,pt){
+  if(typeof sbClearEv==='function') sbClearEv();
+  var _def=pd||cDk(cSt.view==='day'?cSt.dd:cNow);
+  var d=document.getElementById('sbEvDate'); if(d) d.value=_def;
+  var de=document.getElementById('sbEvDateEnd'); if(de) de.value='';
+  if(pt){
+    var s=document.getElementById('sbEvSt'); if(s) s.value=pt;
+    var en=document.getElementById('sbEvEn'); if(en) en.value=cP2(parseInt(pt.split(':')[0])+1)+':00';
+  }
+  var ae=document.getElementById('sidebarAddEvent'); if(ae) ae.style.display='';
+  var ti=document.getElementById('sbEvTitle'); if(ti) ti.focus();
+}
+window.calOpenAdd = function(){cOpenAdd();};
+window.cOe=function(id){
+  var e=cSt.events.find(function(x){return x.id===id;});if(!e)return;
+  if(typeof sbClearEv==='function') sbClearEv();
+  sbEvId=id; sbEvIcon=e.icon||'📅'; sbEvColor=e.color||'#c8b8ff';
+  var h=document.getElementById('sbEvH'); if(h) h.textContent='Edit Event';
+  var ti=document.getElementById('sbEvTitle'); if(ti) ti.value=e.title;
+  var dt=document.getElementById('sbEvDate'); if(dt) dt.value=e.date;
+  var de=document.getElementById('sbEvDateEnd'); if(de) de.value=e.dateEnd||'';
+  var st=document.getElementById('sbEvSt'); if(st) st.value=e.st||'09:00';
+  var en=document.getElementById('sbEvEn'); if(en) en.value=e.en||'10:00';
+  var ad=document.getElementById('sbEvAD'); if(ad){ad.checked=!!e.allDay; sbTogAD(!!e.allDay);}
+  var rec=document.getElementById('sbEvRecur'); if(rec) rec.value=e.recur||'';
+  var recEnd=document.getElementById('sbEvRecurEnd'); if(recEnd) recEnd.value=e.recurEnd||'';
+  var recRow=document.getElementById('sbEvRecurEndRow'); if(recRow) recRow.style.display=e.recur?'':'none';
+  var nt=document.getElementById('sbEvNote'); if(nt) nt.value=e.note||'';
+  var prev=document.getElementById('sbEvIconPrev'); if(prev) prev.textContent=sbEvIcon;
+  var sw=document.getElementById('sbEvColorSw'); if(sw) sw.style.background=sbEvColor;
+  var del=document.getElementById('sbEvDel'); if(del) del.style.display='';
+  var ae=document.getElementById('sidebarAddEvent'); if(ae) ae.style.display='';
+};
 window.cTogAD=function(c){cG('cEvTmRow').style.display=c?'none':'';};
 window.cCloseModal=function(){cG('cEvModal').classList.remove('open');cCloseEK();cCloseCK();};
 window.cSaveEv=function(){var t=cG('cEvTitle').value.trim();if(!t){cG('cEvTitle').focus();return;}var _dateEnd=cG('cEvDateEnd')?cG('cEvDateEnd').value:'';var e={id:cSt.eid||'ev'+Date.now(),title:t,icon:cSt.icon,color:cSt.color,date:cG('cEvDate').value,dateEnd:_dateEnd&&_dateEnd!==cG('cEvDate').value?_dateEnd:'',st:cG('cEvSt').value,en:cG('cEvEn').value,allDay:cG('cEvAD').checked,note:cG('cEvNote').value.trim()};if(cSt.eid){var i=cSt.events.findIndex(function(x){return x.id===cSt.eid;});if(i>=0)cSt.events[i]=e;}else cSt.events.push(e);cCloseModal();cRa();cSave();};
@@ -5824,9 +5888,21 @@ function sbClearEv() {
   var prev = document.getElementById('sbEvIconPrev'); if(prev) prev.textContent='📅';
   var sw = document.getElementById('sbEvColorSw'); if(sw) sw.style.background='#c8b8ff';
   var lbl = document.getElementById('sbEvColorLbl'); if(lbl) lbl.textContent='Choose colour…';
+  var rec = document.getElementById('sbEvRecur'); if(rec) rec.value='';
+  var recEnd = document.getElementById('sbEvRecurEnd'); if(recEnd) recEnd.value='';
+  var recRow = document.getElementById('sbEvRecurEndRow'); if(recRow) recRow.style.display='none';
   var h = document.getElementById('sbEvH'); if(h) h.textContent='New Event';
   var del = document.getElementById('sbEvDel'); if(del) del.style.display='none';
 }
+
+// ── Recurrence dropdown toggle ──
+(function(){
+  var sel=document.getElementById('sbEvRecur');
+  if(sel) sel.addEventListener('change',function(){
+    var row=document.getElementById('sbEvRecurEndRow');
+    if(row) row.style.display=sel.value?'':'none';
+  });
+})();
 
 window.sbTogAD = function(checked) {
   var tr = document.getElementById('sbEvTmRow');
@@ -5849,6 +5925,8 @@ window.sbSaveEv = function() {
     st: document.getElementById('sbEvSt').value,
     en: document.getElementById('sbEvEn').value,
     allDay: document.getElementById('sbEvAD').checked,
+    recur: document.getElementById('sbEvRecur').value || '',
+    recurEnd: document.getElementById('sbEvRecurEnd').value || '',
     note: document.getElementById('sbEvNote').value.trim()
   };
   if(sbEvId) {
@@ -6450,7 +6528,7 @@ window.trDayOpen = function(dk, cfg) {
   });
   var noteEntry = existingArr.find(function(s){return s.type==='__note__';});
   document.getElementById('trDayNote').value = noteEntry?noteEntry.note:'';
-  document.getElementById('trDayPopup')._sel = _sel;
+  document.getElementById('trDayPopup')._sel = _trSel;
   document.getElementById('trDayPopup').style.display = 'flex';
 };
 
@@ -6625,7 +6703,7 @@ function fitMonthGrid(gridId){
   // cal-nav sits before cal-mwrap in the same container
   var navEl=wrap.previousElementSibling;
   var navH=navEl?navEl.offsetHeight:50;
-  var cells=grid.children.length;
+  var cells=grid.querySelectorAll('.cal-m-cell').length;
   var rows=Math.ceil(cells/7);
   if(!rows) return;
   // Measure panel height from the outer container
