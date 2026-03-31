@@ -854,14 +854,14 @@ input[type=time]::-webkit-datetime-edit-ampm-field { display: none !important; }
 
 /* ── MONTHLY VIEW ── */
 .month-nav {
-  display: flex; align-items: center; justify-content: space-between;
+  display: flex; align-items: center; gap: 10px;
   padding: 10px 16px; background: var(--bg);
   border-bottom: 2px solid var(--border);
   position: sticky; top: 0; z-index: 30;
 }
 .month-nav-title {
   font-family: 'Fraunces', serif; font-weight: 900;
-  font-size: 1.1rem; letter-spacing: -0.5px; color: var(--accent);
+  font-size: 1.3rem; letter-spacing: -0.5px; color: var(--accent);
 }
 .month-nav-btn {
   background: none; border: 1px solid var(--border); color: var(--text-muted);
@@ -874,20 +874,22 @@ input[type=time]::-webkit-datetime-edit-ampm-field { display: none !important; }
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   min-width: 500px;
+  flex: 1;
+  min-height: 0;
 }
 .month-day-header {
   text-align: center; padding: 8px 4px;
-  font-size: 0.63rem; font-weight: 700;
+  font-size: 0.64rem; font-weight: 700;
   color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px;
   border-bottom: 1px solid var(--border);
   background: var(--bg); position: sticky; top: 44px; z-index: 20;
 }
 .month-cell {
-  min-height: 90px; padding: 6px;
+  padding: 6px 7px;
   border-right: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
   position: relative; transition: background .15s;
-  cursor: pointer;
+  cursor: pointer; overflow: hidden;
 }
 .month-cell:nth-child(7n) { border-right: none; }
 .month-cell:hover { background: var(--surface2); }
@@ -1601,14 +1603,14 @@ input[type=time]::-webkit-datetime-edit-ampm-field { display: none !important; }
 /* ██ PASTE BACK: Monthly View CSS — lines 855–929 ██ */
 /* ── MONTHLY VIEW ── */
 .month-nav {
-  display: flex; align-items: center; justify-content: space-between;
+  display: flex; align-items: center; gap: 10px;
   padding: 10px 16px; background: var(--bg);
   border-bottom: 2px solid var(--border);
   position: sticky; top: 0; z-index: 30;
 }
 .month-nav-title {
   font-family: 'Fraunces', serif; font-weight: 900;
-  font-size: 1.1rem; letter-spacing: -0.5px; color: var(--accent);
+  font-size: 1.3rem; letter-spacing: -0.5px; color: var(--accent);
 }
 .month-nav-btn {
   background: none; border: 1px solid var(--border); color: var(--text-muted);
@@ -1621,20 +1623,22 @@ input[type=time]::-webkit-datetime-edit-ampm-field { display: none !important; }
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   min-width: 500px;
+  flex: 1;
+  min-height: 0;
 }
 .month-day-header {
   text-align: center; padding: 8px 4px;
-  font-size: 0.63rem; font-weight: 700;
+  font-size: 0.64rem; font-weight: 700;
   color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px;
   border-bottom: 1px solid var(--border);
   background: var(--bg); position: sticky; top: 44px; z-index: 20;
 }
 .month-cell {
-  min-height: 90px; padding: 6px;
+  padding: 6px 7px;
   border-right: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
   position: relative; transition: background .15s;
-  cursor: pointer;
+  cursor: pointer; overflow: hidden;
 }
 .month-cell:nth-child(7n) { border-right: none; }
 .month-cell:hover { background: var(--surface2); }
@@ -2064,7 +2068,6 @@ body { display: flex; flex-direction: column; height: 100vh; }
       <button class="pill-btn" id="calVWeek" onclick="calSv('week')">Week</button>
       <button class="pill-btn" id="calVDay" onclick="calSv('day')">Day</button>
     </div>
-    <button class="icon-btn" style="border-color:var(--accent);color:var(--accent)" onclick="calGoToday()">Today</button>
     <button class="icon-btn" onclick="calOpenAdd()">＋ Event</button>
   </div>
 
@@ -3322,6 +3325,7 @@ function renderGrid() {
   if (appState.view === 'monthly') { renderMonthGrid(); return; }
   const grid = document.getElementById('scheduleGrid');
   if (!grid) return;
+  grid.style.display = ''; grid.style.flexDirection = ''; grid.style.minHeight = '';
   const days = getDays();
   const startMin = timeToMinutes(document.getElementById('startTime').value);
   const endMin   = timeToMinutes(document.getElementById('endTime').value);
@@ -3407,8 +3411,8 @@ function renderMonthGrid() {
   let html = `
     <div class="month-nav">
       <button class="month-nav-btn" onclick="monthNav(-1)">◀</button>
-      <span class="month-nav-title">${monthName}</span>
       <button class="month-nav-btn" onclick="monthNav(1)">▶</button>
+      <span class="month-nav-title">${monthName}</span>
     </div>
     <div class="month-grid">
       ${DOW.map(d => `<div class="month-day-header">${d}</div>`).join('')}`;
@@ -3437,6 +3441,26 @@ function renderMonthGrid() {
   }
   html += '</div>';
   grid.innerHTML = html;
+  grid.style.display = 'flex';
+  grid.style.flexDirection = 'column';
+  grid.style.minHeight = '0';
+  // Dynamically size month grid rows to fill available height (match calendar app)
+  setTimeout(function(){
+    var mg = grid.querySelector('.month-grid'); if(!mg) return;
+    var nav = grid.querySelector('.month-nav');
+    var dh = grid.querySelectorAll('.month-day-header');
+    var navH = nav ? nav.offsetHeight : 50;
+    var dhH = dh.length ? dh[0].offsetHeight : 32;
+    var headerEl = document.querySelector('header');
+    var topH = (headerEl ? headerEl.offsetHeight : 50);
+    var avail = window.innerHeight - topH - navH - dhH - 18;
+    var cells = mg.querySelectorAll('.month-cell').length;
+    var rows = Math.ceil(cells / 7);
+    if(rows && avail > 80){
+      var rowH = Math.max(80, Math.floor(avail / rows));
+      mg.style.gridTemplateRows = 'repeat(' + rows + ',' + rowH + 'px)';
+    }
+  }, 50);
 }
 
 function monthNav(dir) {
@@ -5174,6 +5198,9 @@ window.dsCustomOpen = function() {
   var ni=document.getElementById('dsCustomName'); if(ni) ni.value='';
   var ci=document.getElementById('dsCustomColor'); if(ci) ci.value='#c8b8ff';
   var hi=document.getElementById('dsCustomHours'); if(hi) hi.checked=false;
+  var co=document.getElementById('dsCustomCounter'); if(co) co.checked=false;
+  var rb=document.querySelector('input[name="dsDisplayMode"][value="bar"]'); if(rb) rb.checked=true;
+  dsCustomPreviewMode('bar');
   // Reset emoji preview
   dsCustomSelectedEmoji = '🔖';
   var prev=document.getElementById('dsCustomEmojiPreview'); if(prev) prev.textContent=dsCustomSelectedEmoji;
@@ -5196,7 +5223,7 @@ function dsCustomRenderList() {
   var ctx=dsCustomContext||'ds';
   var customs=ctx==='dp'?dp.custom:ctx==='dm'?dm.custom:ds.custom;
   if (!customs.length) { list.innerHTML='<p style="font-size:.7rem;color:var(--text-muted)">No custom statuses yet.</p>'; return; }
-  list.innerHTML = ds.custom.map(function(t, i) {
+  list.innerHTML = customs.map(function(t, i) {
     return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;padding:6px 8px;background:var(--surface2);border-radius:6px">'
       + '<span style="font-size:1.1rem">' + t.icon + '</span>'
       + '<span style="flex:1;font-size:.8rem;font-weight:500">' + t.label + '</span>'
