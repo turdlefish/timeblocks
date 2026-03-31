@@ -1842,9 +1842,9 @@ input[type=time]::-webkit-datetime-edit-ampm-field { display: none !important; }
 .ds-day-nav-wrap{display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin-left:8px;}
 
 .ds-span-bar{
-  position:absolute; height:24px; border-radius:20px;
-  display:flex; align-items:center; gap:5px;
-  padding:0 10px; font-size:.72rem; font-weight:800;
+  position:absolute; height:16px; border-radius:20px;
+  display:flex; align-items:center; gap:3px;
+  padding:0 6px; font-size:.55rem; font-weight:800;
   white-space:nowrap; pointer-events:all; cursor:default;
   z-index:6; letter-spacing:.04em; text-transform:uppercase;
   border: 1.5px solid currentColor;
@@ -1857,9 +1857,9 @@ input[type=time]::-webkit-datetime-edit-ampm-field { display: none !important; }
 .ds-span-bar:hover{ opacity:1; }
 .ds-span-bar:hover{ opacity:.9; }
 .ds-bar-del{
-  display:none; position:absolute; right:6px; top:50%;
+  display:none; position:absolute; right:4px; top:50%;
   transform:translateY(-50%);
-  width:16px; height:16px; border-radius:50%;
+  width:13px; height:13px; border-radius:50%;
   background:#0004; border:none; color:inherit;
   font-size:.6rem; line-height:1; cursor:pointer;
   align-items:center; justify-content:center;
@@ -1867,7 +1867,7 @@ input[type=time]::-webkit-datetime-edit-ampm-field { display: none !important; }
 }
 .ds-span-bar:hover .ds-bar-del{ display:flex; }
 .ds-span-icon{
-  font-size:1rem; flex-shrink:0;
+  font-size:.7rem; flex-shrink:0;
   filter: drop-shadow(0 1px 1px #0003);
 }
 .ds-span-label{ overflow:hidden; text-overflow:ellipsis; }
@@ -5509,7 +5509,7 @@ function dsInject() {
     });
     if(seg) segments.push(seg);
 
-    var BAR_H=24, BAR_GAP=3, BAR_TOP=28;
+    var BAR_H=16, BAR_GAP=2, BAR_TOP=24;
     segments.forEach(function(sg,si){
       var r1=sg.startCell.getBoundingClientRect();
       var r2=sg.endCell.getBoundingClientRect();
@@ -6104,7 +6104,7 @@ function sCalRender(){
     var isToday=v&&dk2===tk;
     var wk=Math.ceil((sd+dn)/7);
     h+='<div class="cal-m-cell'+(v?'':' cal-oth')+(isToday?' cal-tod':'')+'"'
-+(v?' onclick="cGoDay(\''+dk2+'\')" style="'+(ds.active?'cursor:crosshair':'')+'"':'')
++(v?' data-dk="'+dk2+'" onclick="dsApply(\''+dk2+'\')" style="'+(ds.active?'cursor:crosshair':'')+'"':'')
       +'>'
       +'<div class="cal-m-num">'+(v?dn:'')+'</div>'
       +(v&&i%7===0?'<div class="cal-m-wk">W'+wk+'</div>':'')
@@ -6183,7 +6183,7 @@ function sCalRender(){
         else{sg2.end=dk;sg2.endCell=cell;}
       });
       if(sg2) segs.push(sg2);
-      var BAR_H=24,BAR_GAP=3,BAR_TOP=28;
+      var BAR_H=16,BAR_GAP=2,BAR_TOP=24;
       segs.forEach(function(sg,si){
         var r1=sg.startCell.getBoundingClientRect(),r2=sg.endCell.getBoundingClientRect();
         var slot=stackCount[sg.start]||0;
@@ -6476,7 +6476,7 @@ function makeTrackerCal(cfg){
           else{sg2.end=dk;sg2.endCell=cell;}
         });
         if(sg2) segs.push(sg2);
-        var BAR_H=18,BAR_GAP=2,BAR_TOP=26;
+        var BAR_H=16,BAR_GAP=2,BAR_TOP=24;
         segs.forEach(function(sg,si){
           var r1=sg.startCell.getBoundingClientRect(),r2=sg.endCell.getBoundingClientRect();
           var slot=stackCount[sg.start]||0;
