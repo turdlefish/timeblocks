@@ -2314,6 +2314,17 @@ body { display: flex; flex-direction: column; height: 100vh; }
             <option value="yearly">Yearly</option>
           </select>
         </div>
+        <div class="form-row" id="sbEvRecurDaysRow" style="display:none"><label>Repeat on</label>
+          <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:2px">
+            <label style="font-size:.65rem;display:flex;align-items:center;gap:2px;cursor:pointer;text-transform:none;letter-spacing:0;font-weight:400"><input type="checkbox" class="sbEvRecurDay" value="1"> Mon</label>
+            <label style="font-size:.65rem;display:flex;align-items:center;gap:2px;cursor:pointer;text-transform:none;letter-spacing:0;font-weight:400"><input type="checkbox" class="sbEvRecurDay" value="2"> Tue</label>
+            <label style="font-size:.65rem;display:flex;align-items:center;gap:2px;cursor:pointer;text-transform:none;letter-spacing:0;font-weight:400"><input type="checkbox" class="sbEvRecurDay" value="3"> Wed</label>
+            <label style="font-size:.65rem;display:flex;align-items:center;gap:2px;cursor:pointer;text-transform:none;letter-spacing:0;font-weight:400"><input type="checkbox" class="sbEvRecurDay" value="4"> Thu</label>
+            <label style="font-size:.65rem;display:flex;align-items:center;gap:2px;cursor:pointer;text-transform:none;letter-spacing:0;font-weight:400"><input type="checkbox" class="sbEvRecurDay" value="5"> Fri</label>
+            <label style="font-size:.65rem;display:flex;align-items:center;gap:2px;cursor:pointer;text-transform:none;letter-spacing:0;font-weight:400"><input type="checkbox" class="sbEvRecurDay" value="6"> Sat</label>
+            <label style="font-size:.65rem;display:flex;align-items:center;gap:2px;cursor:pointer;text-transform:none;letter-spacing:0;font-weight:400"><input type="checkbox" class="sbEvRecurDay" value="0"> Sun</label>
+          </div>
+        </div>
         <div class="form-row" id="sbEvRecurEndRow" style="display:none"><label>Repeat until</label><input class="form-input" id="sbEvRecurEnd" type="date"></div>
         <div class="form-row"><label>Notes</label><textarea class="form-input" id="sbEvNote" rows="2" style="resize:vertical" placeholder="Optional…"></textarea></div>
         <div style="display:flex;gap:8px;margin-top:8px">
@@ -2400,6 +2411,8 @@ body { display: flex; flex-direction: column; height: 100vh; }
     <div style="flex:1;display:flex;flex-direction:column;overflow:hidden" id="cMentalMain"></div>
   </div>
 </div>
+  </div>
+</div>
 
 
 
@@ -2433,7 +2446,8 @@ body { display: flex; flex-direction: column; height: 100vh; }
         <div class="emoji-keyboard" id="cEvIconKB"></div>
       </div>
     </div>
-
+  </div>
+</div>
 
 <!-- DS PRINT RANGE MODAL -->
 <div id="dsPrintRangeModal" style="display:none;position:fixed;inset:0;background:#0008;z-index:700;align-items:center;justify-content:center;padding:20px">
@@ -2452,6 +2466,7 @@ body { display: flex; flex-direction: column; height: 100vh; }
       <button class="btn-primary" onclick="dsPrintRangeGo()" style="flex:2">Print</button>
     </div>
   </div>
+</div>
 
 
 <!-- DS OTHER MODAL -->
@@ -2468,7 +2483,7 @@ body { display: flex; flex-direction: column; height: 100vh; }
       <button class="btn-primary" style="flex:2" onclick="dsOtherSave()">Save</button>
     </div>
   </div>
-
+</div>
 
 <!-- DS CUSTOM STATUS MODAL -->
 <div class="ds-ot-modal" id="dsCustomModal" style="display:none">
@@ -4576,8 +4591,12 @@ function cEvMatchesDate(e,k){
   if(diff<0) return false;
   switch(e.recur){
     case 'daily': return true;
-    case 'weekly': return diff%7===0;
-    case 'biweekly': return diff%14===0;
+    case 'weekly':
+    case 'biweekly':
+      if(e.recurDays&&e.recurDays.length){
+        return e.recurDays.indexOf(d1.getDay())!==-1;
+      }
+      return diff%7===0;
     case 'monthly': return d0.getDate()===d1.getDate();
     case 'yearly': return d0.getMonth()===d1.getMonth()&&d0.getDate()===d1.getDate();
     default: return false;
@@ -4807,6 +4826,8 @@ window.cOe=function(id){
   var rec=document.getElementById('sbEvRecur'); if(rec) rec.value=e.recur||'';
   var recEnd=document.getElementById('sbEvRecurEnd'); if(recEnd) recEnd.value=e.recurEnd||'';
   var recRow=document.getElementById('sbEvRecurEndRow'); if(recRow) recRow.style.display=e.recur?'':'none';
+  var daysRow=document.getElementById('sbEvRecurDaysRow'); if(daysRow) daysRow.style.display=(e.recur==='weekly'||e.recur==='biweekly')?'':'none';
+  document.querySelectorAll('.sbEvRecurDay').forEach(function(cb){cb.checked=e.recurDays&&e.recurDays.indexOf(parseInt(cb.value))!==-1;});
   var nt=document.getElementById('sbEvNote'); if(nt) nt.value=e.note||'';
   var prev=document.getElementById('sbEvIconPrev'); if(prev) prev.textContent=sbEvIcon;
   var sw=document.getElementById('sbEvColorSw'); if(sw) sw.style.background=sbEvColor;
@@ -5891,6 +5912,8 @@ function sbClearEv() {
   var rec = document.getElementById('sbEvRecur'); if(rec) rec.value='';
   var recEnd = document.getElementById('sbEvRecurEnd'); if(recEnd) recEnd.value='';
   var recRow = document.getElementById('sbEvRecurEndRow'); if(recRow) recRow.style.display='none';
+  var daysRow = document.getElementById('sbEvRecurDaysRow'); if(daysRow) daysRow.style.display='none';
+  document.querySelectorAll('.sbEvRecurDay').forEach(function(cb){cb.checked=false;});
   var h = document.getElementById('sbEvH'); if(h) h.textContent='New Event';
   var del = document.getElementById('sbEvDel'); if(del) del.style.display='none';
 }
@@ -5901,6 +5924,8 @@ function sbClearEv() {
   if(sel) sel.addEventListener('change',function(){
     var row=document.getElementById('sbEvRecurEndRow');
     if(row) row.style.display=sel.value?'':'none';
+    var daysRow=document.getElementById('sbEvRecurDaysRow');
+    if(daysRow) daysRow.style.display=(sel.value==='weekly'||sel.value==='biweekly')?'':'none';
   });
 })();
 
@@ -5926,6 +5951,7 @@ window.sbSaveEv = function() {
     en: document.getElementById('sbEvEn').value,
     allDay: document.getElementById('sbEvAD').checked,
     recur: document.getElementById('sbEvRecur').value || '',
+    recurDays: Array.from(document.querySelectorAll('.sbEvRecurDay:checked')).map(function(cb){return parseInt(cb.value);}),
     recurEnd: document.getElementById('sbEvRecurEnd').value || '',
     note: document.getElementById('sbEvNote').value.trim()
   };
@@ -6713,7 +6739,7 @@ function fitMonthGrid(gridId){
   var headerEl=document.querySelector('header');
   var tabsEl=document.querySelector('.cal-tabs');
   var topH=(headerEl?headerEl.offsetHeight:50)+(tabsEl?tabsEl.offsetHeight:36);
-  var vpAvail=window.innerHeight-topH-navH-drH-6;
+  var vpAvail=window.innerHeight-topH-navH-drH-18;
   // Use the larger of measured panel height and viewport-based calc
   var panelAvail=panelH>0?panelH-navH-drH:0;
   var available=Math.max(panelAvail, vpAvail);
