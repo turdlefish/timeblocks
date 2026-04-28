@@ -1918,7 +1918,8 @@ body { display: flex; flex-direction: column; height: 100vh; }
 .mob-sidebar-close { display: none; }
 .mob-sidebar-controls { display: none; }
 .mob-fab { display: none; }
-.bottom-nav { display: none; }
+/* NOTE: do NOT add `.bottom-nav { display: none }` here — the @media (max-width:768px) rule above
+   sets display:block on mobile, and a later override here would defeat that and hide the mobile nav. */
 
 
 /* ── TALLY TAB ── */
