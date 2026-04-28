@@ -2061,12 +2061,8 @@ body { display: flex; flex-direction: column; height: 100vh; }
     <button class="nav-tab" id="tabCalBtn" onclick="switchTab('calendar')">📅 Calendar</button>
   </div>
 
-  <!-- Schedule-specific controls (view slider moved into table-tabs row) -->
-  <div id="scheduleControls" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-    <button class="icon-btn" onclick="openNewTableModal()">＋ Table</button>
-    <button class="icon-btn" onclick="openTemplatesModal()">📋 Templates</button>
-    <button class="icon-btn" onclick="openPrintModal()">🖨️ Print</button>
-  </div>
+  <!-- Schedule-specific controls (Print moved to sidebar; Table/Templates accessible elsewhere) -->
+  <div id="scheduleControls" style="display:none"></div>
 
   <!-- Calendar-specific controls (view + add moved into in-tab cal-nav) -->
   <div id="calControls" style="display:none"></div>
@@ -2120,6 +2116,10 @@ body { display: flex; flex-direction: column; height: 100vh; }
         <button class="icon-btn" onclick="toggleTheme()">☀️ / 🌙 Theme</button>
       </div>
 
+      <!-- Print button (desktop sidebar) -->
+      <div class="sidebar-section" id="schedPrintSection">
+        <button class="btn-primary" onclick="openPrintModal()" style="width:100%;font-size:.78rem;padding:8px 0">🖨️ Print</button>
+      </div>
 
       <div class="sidebar-section" id="timeRangeSection">
         <h3>Time Range</h3>
@@ -2286,68 +2286,7 @@ body { display: flex; flex-direction: column; height: 100vh; }
         <h3>Calendar</h3>
         <div class="mini-cal" id="calMiniCal"></div>
       </div>
-      <!-- Add Event section — shown in Events tab -->
-      <div class="sidebar-section" id="sidebarAddEvent">
-        <h3 style="display:flex;align-items:center;justify-content:space-between">
-          <span id="sbEvH">New Event</span>
-          <button id="sbEvDel" onclick="sbDelEv()" style="display:none;font-size:.62rem;background:none;border:1px solid #ff6e6e44;color:var(--red);padding:3px 8px;border-radius:6px;cursor:pointer">Delete</button>
-        </h3>
-        <div class="form-row"><label>Title</label><input class="form-input" id="sbEvTitle" placeholder="Event name" maxlength="60"></div>
-        <div class="form-row"><label>Icon</label>
-          <div class="emoji-keyboard-wrap">
-            <div class="emoji-trigger" id="sbEvIconTrig" onclick="openEmojiKeyboard('sbEvIcon')">
-              <span class="trigger-icon" id="sbEvIconPrev">📅</span>
-              <span class="trigger-label" id="sbEvIconLbl">Choose emoji…</span>
-            </div>
-            <div class="emoji-keyboard" id="sbEvIconEmojiKeyboard"></div>
-          </div>
-        </div>
-        <div class="form-row"><label>Colour</label>
-          <div class="emoji-keyboard-wrap">
-            <div class="emoji-trigger" id="sbEvColorTrig" onclick="openColorKeyboard('sbEvColor')">
-              <span id="sbEvColorSw" style="width:18px;height:18px;border-radius:4px;background:#c8b8ff;display:inline-block;flex-shrink:0"></span>
-              <span class="trigger-label" id="sbEvColorLbl">Choose colour…</span>
-            </div>
-            <div class="color-keyboard" id="sbEvColorColorKeyboard"></div>
-          </div>
-        </div>
-        <div style="display:flex;gap:8px">
-          <div class="form-row" style="flex:1"><label>Start Date</label><input class="form-input" id="sbEvDate" type="date"></div>
-          <div class="form-row" style="flex:1"><label>End Date</label><input class="form-input" id="sbEvDateEnd" type="date"></div>
-        </div>
-        <div style="display:flex;gap:8px" id="sbEvTmRow">
-          <div class="form-row" style="flex:1"><label>Start</label><input class="form-input" id="sbEvSt" type="time" value="09:00"></div>
-          <div class="form-row" style="flex:1"><label>End</label><input class="form-input" id="sbEvEn" type="time" value="10:00"></div>
-        </div>
-        <div class="form-row"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:.75rem;font-weight:400"><input type="checkbox" id="sbEvAD" onchange="sbTogAD(this.checked)"> All day event</label></div>
-        <div class="form-row"><label>Repeat</label>
-          <select class="form-input" id="sbEvRecur" style="font-size:.75rem">
-            <option value="">No repeat</option>
-            <option value="daily">Daily</option>
-            <option value="weekly">Weekly</option>
-            <option value="biweekly">Every 2 weeks</option>
-            <option value="monthly">Monthly</option>
-            <option value="yearly">Yearly</option>
-          </select>
-        </div>
-        <div class="form-row" id="sbEvRecurDaysRow" style="display:none"><label>Repeat on</label>
-          <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:2px">
-            <label style="font-size:.65rem;display:flex;align-items:center;gap:2px;cursor:pointer;text-transform:none;letter-spacing:0;font-weight:400"><input type="checkbox" class="sbEvRecurDay" value="1"> Mon</label>
-            <label style="font-size:.65rem;display:flex;align-items:center;gap:2px;cursor:pointer;text-transform:none;letter-spacing:0;font-weight:400"><input type="checkbox" class="sbEvRecurDay" value="2"> Tue</label>
-            <label style="font-size:.65rem;display:flex;align-items:center;gap:2px;cursor:pointer;text-transform:none;letter-spacing:0;font-weight:400"><input type="checkbox" class="sbEvRecurDay" value="3"> Wed</label>
-            <label style="font-size:.65rem;display:flex;align-items:center;gap:2px;cursor:pointer;text-transform:none;letter-spacing:0;font-weight:400"><input type="checkbox" class="sbEvRecurDay" value="4"> Thu</label>
-            <label style="font-size:.65rem;display:flex;align-items:center;gap:2px;cursor:pointer;text-transform:none;letter-spacing:0;font-weight:400"><input type="checkbox" class="sbEvRecurDay" value="5"> Fri</label>
-            <label style="font-size:.65rem;display:flex;align-items:center;gap:2px;cursor:pointer;text-transform:none;letter-spacing:0;font-weight:400"><input type="checkbox" class="sbEvRecurDay" value="6"> Sat</label>
-            <label style="font-size:.65rem;display:flex;align-items:center;gap:2px;cursor:pointer;text-transform:none;letter-spacing:0;font-weight:400"><input type="checkbox" class="sbEvRecurDay" value="0"> Sun</label>
-          </div>
-        </div>
-        <div class="form-row" id="sbEvRecurEndRow" style="display:none"><label>Repeat until</label><input class="form-input" id="sbEvRecurEnd" type="date"></div>
-        <div class="form-row"><label>Notes</label><textarea class="form-input" id="sbEvNote" rows="2" style="resize:vertical" placeholder="Optional…"></textarea></div>
-        <div style="display:flex;gap:8px;margin-top:8px">
-          <button class="btn-cancel" onclick="sbClearEv()" style="flex:1">Clear</button>
-          <button class="btn-primary" onclick="sbSaveEv()" style="flex:2">Save Event</button>
-        </div>
-      </div>
+      <!-- (Sidebar Add Event form removed — use the +Event popup instead) -->
       <!-- Period tracking section — shown in Period tab -->
       <div class="sidebar-section" id="sidebarPeriod" style="display:none">
         <h3 style="display:flex;align-items:center;justify-content:space-between">
@@ -2473,6 +2412,30 @@ body { display: flex; flex-direction: column; height: 100vh; }
     <div id="cEvTmRow" style="display:flex;gap:8px">
       <div class="form-row" style="flex:1"><label>Start Time</label><input class="form-input" id="cEvSt" type="time" value="09:00"></div>
       <div class="form-row" style="flex:1"><label>End Time</label><input class="form-input" id="cEvEn" type="time" value="10:00"></div>
+    </div>
+    <div class="form-row"><label>Repeat</label>
+      <select class="form-input" id="cEvRecur" style="font-size:.78rem" onchange="cTogRecur(this.value)">
+        <option value="">No repeat</option>
+        <option value="daily">Daily</option>
+        <option value="weekly">Weekly</option>
+        <option value="biweekly">Every 2 weeks</option>
+        <option value="monthly">Monthly</option>
+        <option value="yearly">Yearly</option>
+      </select>
+    </div>
+    <div class="form-row" id="cEvRecurDaysRow" style="display:none"><label>Repeat on</label>
+      <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:2px">
+        <label style="font-size:.7rem;display:flex;align-items:center;gap:3px;cursor:pointer;text-transform:none;letter-spacing:0;font-weight:400"><input type="checkbox" class="cEvRecurDay" value="1"> Mon</label>
+        <label style="font-size:.7rem;display:flex;align-items:center;gap:3px;cursor:pointer;text-transform:none;letter-spacing:0;font-weight:400"><input type="checkbox" class="cEvRecurDay" value="2"> Tue</label>
+        <label style="font-size:.7rem;display:flex;align-items:center;gap:3px;cursor:pointer;text-transform:none;letter-spacing:0;font-weight:400"><input type="checkbox" class="cEvRecurDay" value="3"> Wed</label>
+        <label style="font-size:.7rem;display:flex;align-items:center;gap:3px;cursor:pointer;text-transform:none;letter-spacing:0;font-weight:400"><input type="checkbox" class="cEvRecurDay" value="4"> Thu</label>
+        <label style="font-size:.7rem;display:flex;align-items:center;gap:3px;cursor:pointer;text-transform:none;letter-spacing:0;font-weight:400"><input type="checkbox" class="cEvRecurDay" value="5"> Fri</label>
+        <label style="font-size:.7rem;display:flex;align-items:center;gap:3px;cursor:pointer;text-transform:none;letter-spacing:0;font-weight:400"><input type="checkbox" class="cEvRecurDay" value="6"> Sat</label>
+        <label style="font-size:.7rem;display:flex;align-items:center;gap:3px;cursor:pointer;text-transform:none;letter-spacing:0;font-weight:400"><input type="checkbox" class="cEvRecurDay" value="0"> Sun</label>
+      </div>
+    </div>
+    <div class="form-row" id="cEvRecurEndRow" style="display:none"><label>Repeat until</label>
+      <input class="form-input" id="cEvRecurEnd" type="date">
     </div>
     <div class="form-row"><label>Note</label><textarea class="form-input" id="cEvNote" placeholder="Optional note" rows="2" style="resize:vertical;font-family:inherit"></textarea></div>
     <div class="modal-btns">
@@ -4771,12 +4734,12 @@ function cRUp(){
 function cViewToggle(){
   var v=cSt.view;
   var m=v==='month'?' active':'', w=v==='week'?' active':'', d=v==='day'?' active':'';
-  return '<div class="pill-group" style="margin-left:auto">'
+  return '<div class="pill-group" style="margin-left:auto"><button class="pill-btn active" onclick="calGoToday()">Today</button></div>'
+    +'<div class="pill-group" style="margin-left:8px">'
     +'<button class="pill-btn'+m+'" onclick="calSv(\'month\')">Month</button>'
     +'<button class="pill-btn'+w+'" onclick="calSv(\'week\')">Week</button>'
     +'<button class="pill-btn'+d+'" onclick="calSv(\'day\')">Day</button>'
     +'</div>'
-    +'<button class="pill-btn" onclick="calGoToday()" style="margin-left:8px;font-size:.72rem;padding:5px 12px">Today</button>'
     +'<button class="icon-btn" onclick="calOpenAdd()" style="margin-left:8px;font-size:.72rem;padding:5px 12px">＋ Event</button>';
 }
 function cRMonth(){
@@ -4790,6 +4753,7 @@ function cRMonth(){
   var h='<div class="cal-nav"><button class="cal-arr" onclick="cMn(-1)">&#9664;</button><button class="cal-arr" onclick="cMn(1)">&#9654;</button>'
     +'<select class="cal-jump" onchange="cMnJump(this.value,\'m\')" title="Jump to month">'+monthOpts+'</select>'
     +'<select class="cal-jump" onchange="cMnJump(this.value,\'y\')" title="Jump to year">'+yrOpts+'</select>'
+    +'<div class="cal-title">'+f.toLocaleString('default',{month:'long',year:'numeric'})+'</div>'
     +cViewToggle()+'</div><div class="cal-mwrap"><div class="cal-m-dr">'+['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(function(d){return'<div class="cal-m-dh">'+d+'</div>';}).join('')+'</div><div class="cal-m-grid">';
   for(var i=0;i<tot;i++){
     var dn=i-sd+1,v=dn>=1&&dn<=l.getDate(),dk2=v?y+'-'+cP2(m+1)+'-'+cP2(dn):'',it=v&&dk2===tk,wk=Math.ceil((sd+dn)/7);
@@ -4950,45 +4914,103 @@ function cDEvPD(e){if(e.button!==0)return;cdD.id=e.currentTarget.dataset.id;cdD.
 function cDEvPM(e){if(!cdD.active&&Math.abs(e.clientY-cdD.sY)>5){cdD.active=true;var ev=cSt.events.find(function(x){return x.id===cdD.id;});if(ev){var tc=cDark(ev.color)?'#fff':'#2d2a3e';var gh=cG('cGhost');gh.style.cssText='display:flex;background:'+ev.color+';color:'+tc+';';gh.textContent=ev.icon+' '+ev.title;}cdD.el.classList.add('cdrag');}if(!cdD.active)return;var gh=cG('cGhost');gh.style.left=(e.clientX+12)+'px';gh.style.top=(e.clientY-12)+'px';var col=cG('cDCol'),sg=cG('cDSG');if(col&&sg){var cr=col.getBoundingClientRect(),snap=Math.round(((e.clientY-cdD.oY-cr.top)/cr.height*1440)/15)*15,cl=Math.max(0,Math.min(snap,1380));sg.style.display='block';sg.style.top=(cl/1440*cr.height)+'px';var sl=sg.querySelector('.sl');if(sl)sl.textContent=cP2(Math.floor(cl/60))+':'+cP2(cl%60);}}
 function cDEvPU(e){cdD.el.removeEventListener('pointermove',cDEvPM);cdD.el.removeEventListener('pointerup',cDEvPU);cdD.el.removeEventListener('pointercancel',cDEvPU);var gh=cG('cGhost');gh.style.display='none';var sg=cG('cDSG');if(sg)sg.style.display='none';if(!cdD.active){cdD.el.classList.remove('cdrag');cdD.active=false;return;}cdD.el.classList.remove('cdrag');var col=cG('cDCol');if(col){var ev=cSt.events.find(function(x){return x.id===cdD.id;});if(ev){var cr=col.getBoundingClientRect(),snap=Math.round(((e.clientY-cdD.oY-cr.top)/cr.height*1440)/15)*15,cl=Math.max(0,Math.min(snap,1380)),dur=cTMin(ev.en)-cTMin(ev.st);ev.st=cMTim(cl);ev.en=cMTim(Math.min(cl+Math.max(dur,30),1440));cRa();cSave();}}cdD.active=false;cdD.id=null;}
 
+// Open the New Event popup, optionally pre-filled to a date and start-time.
 function cOpenAdd(pd,pt){
-  if(typeof sbClearEv==='function') sbClearEv();
+  cSt.eid=null;
+  cSt.icon='📅';
+  cSt.color='#c8b8ff';
   var _def=pd||cDk(cSt.view==='day'?cSt.dd:cNow);
-  var d=document.getElementById('sbEvDate'); if(d) d.value=_def;
-  var de=document.getElementById('sbEvDateEnd'); if(de) de.value='';
-  if(pt){
-    var s=document.getElementById('sbEvSt'); if(s) s.value=pt;
-    var en=document.getElementById('sbEvEn'); if(en) en.value=cP2(parseInt(pt.split(':')[0])+1)+':00';
+  var h=cG('cEvH'); if(h) h.textContent='New Event';
+  var ti=cG('cEvTitle'); if(ti) ti.value='';
+  var dt=cG('cEvDate'); if(dt) dt.value=_def;
+  var de=cG('cEvDateEnd'); if(de) de.value='';
+  var s=cG('cEvSt'); if(s) s.value=pt||'09:00';
+  var en=cG('cEvEn');
+  if(en){
+    if(pt){ en.value=cP2(parseInt(pt.split(':')[0])+1)+':00'; }
+    else  { en.value='10:00'; }
   }
-  var ae=document.getElementById('sidebarAddEvent'); if(ae) ae.style.display='';
-  var ti=document.getElementById('sbEvTitle'); if(ti) ti.focus();
+  var ad=cG('cEvAD'); if(ad){ ad.checked=false; cTogAD(false); }
+  var rec=cG('cEvRecur'); if(rec){ rec.value=''; cTogRecur(''); }
+  var recEnd=cG('cEvRecurEnd'); if(recEnd) recEnd.value='';
+  document.querySelectorAll('.cEvRecurDay').forEach(function(cb){cb.checked=false;});
+  var nt=cG('cEvNote'); if(nt) nt.value='';
+  var del=cG('cEvDelBtn'); if(del) del.style.display='none';
+  cSyncT();
+  cG('cEvModal').classList.add('open');
+  setTimeout(function(){ if(ti) ti.focus(); },50);
 }
-window.calOpenAdd = function(){cOpenAdd();};
+window.calOpenAdd = function(pd,pt){cOpenAdd(pd,pt);};
+
+// Open an existing event in the popup for editing
 window.cOe=function(id){
   var e=cSt.events.find(function(x){return x.id===id;});if(!e)return;
-  if(typeof sbClearEv==='function') sbClearEv();
-  sbEvId=id; sbEvIcon=e.icon||'📅'; sbEvColor=e.color||'#c8b8ff';
-  var h=document.getElementById('sbEvH'); if(h) h.textContent='Edit Event';
-  var ti=document.getElementById('sbEvTitle'); if(ti) ti.value=e.title;
-  var dt=document.getElementById('sbEvDate'); if(dt) dt.value=e.date;
-  var de=document.getElementById('sbEvDateEnd'); if(de) de.value=e.dateEnd||'';
-  var st=document.getElementById('sbEvSt'); if(st) st.value=e.st||'09:00';
-  var en=document.getElementById('sbEvEn'); if(en) en.value=e.en||'10:00';
-  var ad=document.getElementById('sbEvAD'); if(ad){ad.checked=!!e.allDay; sbTogAD(!!e.allDay);}
-  var rec=document.getElementById('sbEvRecur'); if(rec) rec.value=e.recur||'';
-  var recEnd=document.getElementById('sbEvRecurEnd'); if(recEnd) recEnd.value=e.recurEnd||'';
-  var recRow=document.getElementById('sbEvRecurEndRow'); if(recRow) recRow.style.display=e.recur?'':'none';
-  var daysRow=document.getElementById('sbEvRecurDaysRow'); if(daysRow) daysRow.style.display=(e.recur==='weekly'||e.recur==='biweekly')?'':'none';
-  document.querySelectorAll('.sbEvRecurDay').forEach(function(cb){cb.checked=e.recurDays&&e.recurDays.indexOf(parseInt(cb.value))!==-1;});
-  var nt=document.getElementById('sbEvNote'); if(nt) nt.value=e.note||'';
-  var prev=document.getElementById('sbEvIconPrev'); if(prev) prev.textContent=sbEvIcon;
-  var sw=document.getElementById('sbEvColorSw'); if(sw) sw.style.background=sbEvColor;
-  var del=document.getElementById('sbEvDel'); if(del) del.style.display='';
-  var ae=document.getElementById('sidebarAddEvent'); if(ae) ae.style.display='';
+  cSt.eid=id;
+  cSt.icon=e.icon||'📅';
+  cSt.color=e.color||'#c8b8ff';
+  var h=cG('cEvH'); if(h) h.textContent='Edit Event';
+  var ti=cG('cEvTitle'); if(ti) ti.value=e.title||'';
+  var dt=cG('cEvDate'); if(dt) dt.value=e.date||'';
+  var de=cG('cEvDateEnd'); if(de) de.value=e.dateEnd||'';
+  var st=cG('cEvSt'); if(st) st.value=e.st||'09:00';
+  var en=cG('cEvEn'); if(en) en.value=e.en||'10:00';
+  var ad=cG('cEvAD'); if(ad){ad.checked=!!e.allDay; cTogAD(!!e.allDay);}
+  var rec=cG('cEvRecur'); if(rec){ rec.value=e.recur||''; cTogRecur(e.recur||''); }
+  var recEnd=cG('cEvRecurEnd'); if(recEnd) recEnd.value=e.recurEnd||'';
+  document.querySelectorAll('.cEvRecurDay').forEach(function(cb){
+    cb.checked=!!(e.recurDays&&e.recurDays.indexOf(parseInt(cb.value))!==-1);
+  });
+  var nt=cG('cEvNote'); if(nt) nt.value=e.note||'';
+  var del=cG('cEvDelBtn'); if(del) del.style.display='';
+  cSyncT();
+  cG('cEvModal').classList.add('open');
 };
-window.cTogAD=function(c){cG('cEvTmRow').style.display=c?'none':'';};
+
+window.cTogAD=function(c){var r=cG('cEvTmRow'); if(r) r.style.display=c?'none':'';};
+window.cTogRecur=function(v){
+  var endRow=cG('cEvRecurEndRow'); if(endRow) endRow.style.display=v?'':'none';
+  var daysRow=cG('cEvRecurDaysRow'); if(daysRow) daysRow.style.display=(v==='weekly'||v==='biweekly')?'':'none';
+};
 window.cCloseModal=function(){cG('cEvModal').classList.remove('open');cCloseEK();cCloseCK();};
-window.cSaveEv=function(){var t=cG('cEvTitle').value.trim();if(!t){cG('cEvTitle').focus();return;}var _dateEnd=cG('cEvDateEnd')?cG('cEvDateEnd').value:'';var e={id:cSt.eid||'ev'+Date.now(),title:t,icon:cSt.icon,color:cSt.color,date:cG('cEvDate').value,dateEnd:_dateEnd&&_dateEnd!==cG('cEvDate').value?_dateEnd:'',st:cG('cEvSt').value,en:cG('cEvEn').value,allDay:cG('cEvAD').checked,note:cG('cEvNote').value.trim()};if(cSt.eid){var i=cSt.events.findIndex(function(x){return x.id===cSt.eid;});if(i>=0)cSt.events[i]=e;}else cSt.events.push(e);cCloseModal();cRa();cSave();};
-window.cDelEv=function(){if(!cSt.eid)return;cSt.events=cSt.events.filter(function(e){return e.id!==cSt.eid;});cCloseModal();cRa();cSave();};
+
+window.cSaveEv=function(){
+  var t=cG('cEvTitle').value.trim();
+  if(!t){cG('cEvTitle').focus();return;}
+  var _dateEnd=cG('cEvDateEnd')?cG('cEvDateEnd').value:'';
+  var recur=cG('cEvRecur')?cG('cEvRecur').value:'';
+  var recurEnd=cG('cEvRecurEnd')?cG('cEvRecurEnd').value:'';
+  var recurDays=[];
+  if(recur==='weekly'||recur==='biweekly'){
+    document.querySelectorAll('.cEvRecurDay:checked').forEach(function(cb){recurDays.push(parseInt(cb.value));});
+  }
+  var e={
+    id:cSt.eid||'ev'+Date.now(),
+    title:t,
+    icon:cSt.icon,
+    color:cSt.color,
+    date:cG('cEvDate').value,
+    dateEnd:_dateEnd&&_dateEnd!==cG('cEvDate').value?_dateEnd:'',
+    st:cG('cEvSt').value,
+    en:cG('cEvEn').value,
+    allDay:cG('cEvAD').checked,
+    recur:recur||'',
+    recurEnd:recur?recurEnd:'',
+    recurDays:recurDays.length?recurDays:undefined,
+    note:cG('cEvNote').value.trim()
+  };
+  if(cSt.eid){
+    var i=cSt.events.findIndex(function(x){return x.id===cSt.eid;});
+    if(i>=0) cSt.events[i]=e;
+  } else {
+    cSt.events.push(e);
+  }
+  cCloseModal(); cRa(); cSave();
+};
+window.cDelEv=function(){
+  if(!cSt.eid)return;
+  cSt.events=cSt.events.filter(function(e){return e.id!==cSt.eid;});
+  cCloseModal(); cRa(); cSave();
+};
 cG('cEvModal').addEventListener('click',function(e){if(e.target===cG('cEvModal'))cCloseModal();});
 
 function cSyncT(){
@@ -6273,6 +6295,7 @@ function sCalRender(){
     +'<button class="cal-arr" onclick="sCalNav(1)">&#9654;</button>'
     +'<select class="cal-jump" onchange="sCalNavJump(this.value,\'m\')" title="Jump to month">'+monthOpts+'</select>'
     +'<select class="cal-jump" onchange="sCalNavJump(this.value,\'y\')" title="Jump to year">'+yrOpts+'</select>'
+    +'<div class="cal-title">'+f.toLocaleString('default',{month:'long',year:'numeric'})+'</div>'
     +'<div class="pill-group" style="margin-left:auto"><button class="pill-btn active" onclick="sCalNav(0)">Today</button></div>'
     +'</div>'
     +'<div class="cal-mwrap">'
@@ -6605,6 +6628,7 @@ function makeTrackerCal(cfg){
       +'<button class="cal-arr" onclick="'+cfg.navFn+'(1)">&#9654;</button>'
       +'<select class="cal-jump" onchange="'+cfg.navFn+'Jump(this.value,\'m\')" title="Jump to month">'+monthOpts+'</select>'
       +'<select class="cal-jump" onchange="'+cfg.navFn+'Jump(this.value,\'y\')" title="Jump to year">'+yrOpts+'</select>'
+      +'<div class="cal-title">'+title+'</div>'
       +'<div class="pill-group" style="margin-left:auto"><button class="pill-btn active" onclick="'+cfg.navFn+'(0)">Today</button></div>'
       +'</div>'
       +'<div class="cal-mwrap"><div class="cal-m-dr">'
