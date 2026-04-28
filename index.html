@@ -192,13 +192,20 @@ header {
 .user-chip.me { border-color: var(--accent); color: var(--accent); }
 
 /* ── TABLE TABS (schedule) ── */
+.table-tabs-row {
+  display: flex;
+  align-items: flex-end;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  padding-top: 10px;
+}
 .table-tabs {
   display: flex;
   gap: 6px;
-  padding: 10px 24px 0;
-  border-bottom: 1px solid var(--border);
+  padding: 0 0 0 24px;
   overflow-x: auto;
-  background: var(--surface);
+  flex: 1;
+  min-width: 0;
 }
 .table-tab {
   background: none;
@@ -873,7 +880,7 @@ input[type=time]::-webkit-datetime-edit-ampm-field { display: none !important; }
 .month-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  min-width: 500px;
+  min-width: 0;
   flex: 1;
   min-height: 0;
 }
@@ -997,10 +1004,13 @@ input[type=time]::-webkit-datetime-edit-ampm-field { display: none !important; }
 .cal-title{font-family:'Fraunces',serif;font-weight:900;font-size:1.3rem;letter-spacing:-.5px;color:var(--accent);}
 .cal-arr{background:none;border:1px solid var(--border);color:var(--text-muted);font-family:'DM Mono',monospace;font-size:.75rem;padding:5px 10px;border-radius:7px;cursor:pointer;transition:all .15s;}
 .cal-arr:hover{border-color:var(--accent);color:var(--accent);}
+.cal-jump{background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'DM Mono',monospace;font-size:.75rem;padding:5px 10px;border-radius:7px;cursor:pointer;transition:all .15s;}
+.cal-jump:hover{border-color:var(--accent);}
+.cal-jump:focus{outline:none;border-color:var(--accent);}
 .cal-mwrap{flex:1;overflow:auto;}
 .cal-m-dr{display:grid;grid-template-columns:repeat(7,1fr);position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--border);}
 .cal-m-dh{text-align:center;padding:8px 4px;font-size:.64rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1.5px;}
-.cal-m-grid{display:grid;grid-template-columns:repeat(7,1fr);min-width:500px;}
+.cal-m-grid{display:grid;grid-template-columns:repeat(7,1fr);min-width:0;}
 .cal-m-cell{min-height:96px;padding:6px 7px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s;position:relative;}
 .cal-m-cell:nth-child(7n){border-right:none;}
 .cal-m-cell:hover{background:var(--surface2);}
@@ -1622,7 +1632,7 @@ input[type=time]::-webkit-datetime-edit-ampm-field { display: none !important; }
 .month-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  min-width: 500px;
+  min-width: 0;
   flex: 1;
   min-height: 0;
 }
@@ -1817,7 +1827,7 @@ input[type=time]::-webkit-datetime-edit-ampm-field { display: none !important; }
 .ds-bar-layer{position:absolute;inset:0;pointer-events:none;z-index:5;overflow:visible;}
 .ds-counter-dots{position:absolute;bottom:4px;left:4px;right:4px;
   display:flex;flex-wrap:wrap;gap:1px;align-items:flex-end;pointer-events:all;z-index:7;}
-.ds-counter-dot{font-size:.6rem;line-height:1;cursor:pointer;transition:transform .1s;}
+.ds-counter-dot{font-size:1.1rem;line-height:1;cursor:pointer;transition:transform .1s;}
 .ds-counter-dot:hover{transform:scale(1.2);}
 .ds-counter-add{font-size:.75rem;opacity:.5;cursor:pointer;padding:0 2px;
   border:1px dashed currentColor;border-radius:4px;line-height:1;transition:opacity .15s;}
@@ -1846,9 +1856,9 @@ input[type=time]::-webkit-datetime-edit-ampm-field { display: none !important; }
 .ds-day-nav-wrap{display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin-left:8px;}
 
 .ds-span-bar{
-  position:absolute; height:16px; border-radius:20px;
-  display:flex; align-items:center; gap:3px;
-  padding:0 6px; font-size:.55rem; font-weight:800;
+  position:absolute; height:22px; border-radius:22px;
+  display:flex; align-items:center; gap:4px;
+  padding:0 8px; font-size:.7rem; font-weight:800;
   white-space:nowrap; pointer-events:all; cursor:default;
   z-index:6; letter-spacing:.04em; text-transform:uppercase;
   border: 1.5px solid currentColor;
@@ -1871,7 +1881,7 @@ input[type=time]::-webkit-datetime-edit-ampm-field { display: none !important; }
 }
 .ds-span-bar:hover .ds-bar-del{ display:flex; }
 .ds-span-icon{
-  font-size:.7rem; flex-shrink:0;
+  font-size:.95rem; flex-shrink:0; line-height:1;
   filter: drop-shadow(0 1px 1px #0003);
 }
 .ds-span-label{ overflow:hidden; text-overflow:ellipsis; }
@@ -2049,27 +2059,15 @@ body { display: flex; flex-direction: column; height: 100vh; }
     <button class="nav-tab" id="tabCalBtn" onclick="switchTab('calendar')">📅 Calendar</button>
   </div>
 
-  <!-- Schedule-specific controls -->
+  <!-- Schedule-specific controls (view slider moved into table-tabs row) -->
   <div id="scheduleControls" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-    <div class="pill-group" id="viewToggle">
-      <button class="pill-btn active" onclick="setView('weekly')">Weekly</button>
-      <button class="pill-btn" onclick="setView('fortnightly')">Fortnightly</button>
-      <button class="pill-btn" onclick="setView('monthly')">Monthly</button>
-    </div>
     <button class="icon-btn" onclick="openNewTableModal()">＋ Table</button>
     <button class="icon-btn" onclick="openTemplatesModal()">📋 Templates</button>
     <button class="icon-btn" onclick="openPrintModal()">🖨️ Print</button>
   </div>
 
-  <!-- Calendar-specific controls -->
-  <div id="calControls" style="display:none;align-items:center;gap:8px;flex-wrap:wrap">
-    <div class="pill-group">
-      <button class="pill-btn active" id="calVMonth" onclick="calSv('month')">Month</button>
-      <button class="pill-btn" id="calVWeek" onclick="calSv('week')">Week</button>
-      <button class="pill-btn" id="calVDay" onclick="calSv('day')">Day</button>
-    </div>
-    <button class="icon-btn" onclick="calOpenAdd()">＋ Event</button>
-  </div>
+  <!-- Calendar-specific controls (view + add moved into in-tab cal-nav) -->
+  <div id="calControls" style="display:none"></div>
 
   <!-- Tasks-specific controls -->
   <div id="tasksControls" style="display:none;align-items:center;gap:8px;flex-wrap:wrap">
@@ -2102,7 +2100,14 @@ body { display: flex; flex-direction: column; height: 100vh; }
 
 <!-- ── SCHEDULE VIEW ── -->
 <div class="view-panel active" id="panelSchedule">
-  <div class="table-tabs" id="tableTabs"></div>
+  <div class="table-tabs-row">
+    <div class="table-tabs" id="tableTabs"></div>
+    <div class="pill-group" id="viewToggle" style="margin-left:auto;padding-right:18px;flex-shrink:0">
+      <button class="pill-btn active" id="vbWeekly"     onclick="setView('weekly')">Weekly</button>
+      <button class="pill-btn"        id="vbFortnightly" onclick="setView('fortnightly')">Fortnightly</button>
+      <button class="pill-btn"        id="vbMonthly"     onclick="setView('monthly')">Monthly</button>
+    </div>
+  </div>
   <div class="app-body">
     <!-- Schedule Sidebar -->
     <div class="sidebar" id="scheduleSidebar">
@@ -2346,7 +2351,6 @@ body { display: flex; flex-direction: column; height: 100vh; }
           >↩ Undo</button>
         </h3>
         <div id="dpToolbar"></div>
-        <button onclick="showPeriodTally()" class="btn-primary" style="margin-top:12px;width:100%;font-size:.72rem;padding:7px 0;">📊 View Tally</button>
       </div>
       <!-- Mental health section — shown in Mental tab -->
       <div class="sidebar-section" id="sidebarMental" style="display:none">
@@ -2359,7 +2363,6 @@ body { display: flex; flex-direction: column; height: 100vh; }
           >↩ Undo</button>
         </h3>
         <div id="dmToolbar"></div>
-        <button onclick="showMentalTally()" class="btn-primary" style="margin-top:12px;width:100%;font-size:.72rem;padding:7px 0;">📊 View Tally</button>
       </div>
       <!-- Day Status section — shown in Status tab -->
       <div class="sidebar-section" id="sidebarDayStatus" style="display:none">
@@ -3493,12 +3496,19 @@ function renderMonthGrid() {
     var navH = nav ? nav.offsetHeight : 50;
     var dhH = dh.length ? dh[0].offsetHeight : 32;
     var headerEl = document.querySelector('header');
-    var topH = (headerEl ? headerEl.offsetHeight : 50);
-    var avail = window.innerHeight - topH - navH - dhH - 18;
+    var userBarEl = document.querySelector('.user-bar');
+    var tabsRowEl = document.querySelector('.table-tabs-row');
+    var topH = (headerEl ? headerEl.offsetHeight : 0)
+             + (userBarEl ? userBarEl.offsetHeight : 0)
+             + (tabsRowEl ? tabsRowEl.offsetHeight : 0);
+    var avail = window.innerHeight - topH - navH - dhH - 14;
     var cells = mg.querySelectorAll('.month-cell').length;
     var rows = Math.ceil(cells / 7);
-    if(rows && avail > 80){
-      var rowH = Math.max(80, Math.floor(avail / rows));
+    if(rows && avail > 60){
+      // Use exact divide so the grid never exceeds available height
+      var rowH = Math.floor(avail / rows);
+      if(rowH < 60) rowH = 60;
+      if(rowH * rows > avail) rowH = Math.floor(avail / rows);
       mg.style.gridTemplateRows = 'repeat(' + rows + ',' + rowH + 'px)';
     }
   }, 50);
@@ -4761,12 +4771,21 @@ function cViewToggle(){
     +'<button class="pill-btn'+m+'" onclick="calSv(\'month\')">Month</button>'
     +'<button class="pill-btn'+w+'" onclick="calSv(\'week\')">Week</button>'
     +'<button class="pill-btn'+d+'" onclick="calSv(\'day\')">Day</button>'
-    +'</div>';
+    +'</div>'
+    +'<button class="icon-btn" onclick="calOpenAdd()" style="margin-left:8px;font-size:.72rem;padding:5px 12px">＋ Event</button>';
 }
 function cRMonth(){
   var M=cG('cMain');if(!M)return;
   var y=cSt.y,m=cSt.m,f=new Date(y,m,1),l=new Date(y,m+1,0),sd=(f.getDay()+6)%7,tot=Math.ceil((sd+l.getDate())/7)*7,tk=cDk(cNow);
-  var h='<div class="cal-nav"><button class="cal-arr" onclick="cMn(-1)">&#9664;</button><button class="cal-arr" onclick="cMn(1)">&#9654;</button><div class="cal-title">'+f.toLocaleString('default',{month:'long',year:'numeric'})+'</div>'+cViewToggle()+'</div><div class="cal-mwrap"><div class="cal-m-dr">'+['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(function(d){return'<div class="cal-m-dh">'+d+'</div>';}).join('')+'</div><div class="cal-m-grid">';
+  var monthOpts=['January','February','March','April','May','June','July','August','September','October','November','December']
+    .map(function(mn,mi){return '<option value="'+mi+'"'+(mi===m?' selected':'')+'>'+mn+'</option>';}).join('');
+  var nowYr=new Date().getFullYear();
+  var yrOpts='';
+  for(var yi=nowYr-10; yi<=nowYr+5; yi++){ yrOpts += '<option value="'+yi+'"'+(yi===y?' selected':'')+'>'+yi+'</option>'; }
+  var h='<div class="cal-nav"><button class="cal-arr" onclick="cMn(-1)">&#9664;</button><button class="cal-arr" onclick="cMn(1)">&#9654;</button>'
+    +'<select class="cal-jump" onchange="cMnJump(this.value,\'m\')" title="Jump to month">'+monthOpts+'</select>'
+    +'<select class="cal-jump" onchange="cMnJump(this.value,\'y\')" title="Jump to year">'+yrOpts+'</select>'
+    +cViewToggle()+'</div><div class="cal-mwrap"><div class="cal-m-dr">'+['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(function(d){return'<div class="cal-m-dh">'+d+'</div>';}).join('')+'</div><div class="cal-m-grid">';
   for(var i=0;i<tot;i++){
     var dn=i-sd+1,v=dn>=1&&dn<=l.getDate(),dk2=v?y+'-'+cP2(m+1)+'-'+cP2(dn):'',it=v&&dk2===tk,wk=Math.ceil((sd+dn)/7);
     // Only show single-day events as chips; multi-day drawn as span bars after
@@ -4779,6 +4798,7 @@ function cRMonth(){
   setTimeout(fitAllMonthGrids,0);
 }
 window.cMn=function(d){var m=cSt.m+d,y=cSt.y;if(m<0){m=11;y--;}if(m>11){m=0;y++;}cSt.m=m;cSt.y=y;cSt.my=y;cSt.mm=m;cRa();};
+window.cMnJump=function(val,kind){var n=parseInt(val,10); if(isNaN(n)) return; if(kind==='m'){cSt.m=n;cSt.mm=n;} else if(kind==='y'){cSt.y=n;cSt.my=n;} cRa();};
 window.cGoDay=function(dk2){
   // Status tab routes the click to dsApply; if status didn't intercept, open the new-event modal for this date.
   if(typeof window.dsInterceptDay==='function'&&window.dsInterceptDay(dk2))return;
@@ -5638,7 +5658,7 @@ function dsInject() {
     });
     if(seg) segments.push(seg);
 
-    var BAR_H=16, BAR_GAP=2, BAR_TOP=24;
+    var BAR_H=22, BAR_GAP=3, BAR_TOP=26;
     segments.forEach(function(sg,si){
       var r1=sg.startCell.getBoundingClientRect();
       var r2=sg.endCell.getBoundingClientRect();
@@ -6238,10 +6258,16 @@ function sCalRender(){
   var tk=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
   var title=f.toLocaleString('default',{month:'long',year:'numeric'});
 
+  var monthOpts=['January','February','March','April','May','June','July','August','September','October','November','December']
+    .map(function(mn,mi){return '<option value="'+mi+'"'+(mi===m?' selected':'')+'>'+mn+'</option>';}).join('');
+  var nowYr=new Date().getFullYear();
+  var yrOpts='';
+  for(var yi=nowYr-10; yi<=nowYr+5; yi++){ yrOpts += '<option value="'+yi+'"'+(yi===y?' selected':'')+'>'+yi+'</option>'; }
   var h='<div class="cal-nav">'
     +'<button class="cal-arr" onclick="sCalNav(-1)">&#9664;</button>'
     +'<button class="cal-arr" onclick="sCalNav(1)">&#9654;</button>'
-    +'<div class="cal-title">'+title+'</div>'
+    +'<select class="cal-jump" onchange="sCalNavJump(this.value,\'m\')" title="Jump to month">'+monthOpts+'</select>'
+    +'<select class="cal-jump" onchange="sCalNavJump(this.value,\'y\')" title="Jump to year">'+yrOpts+'</select>'
     +'<div class="pill-group" style="margin-left:auto"><button class="pill-btn active" onclick="sCalNav(0)">Today</button></div>'
     +'</div>'
     +'<div class="cal-mwrap">'
@@ -6331,7 +6357,7 @@ function sCalRender(){
         else{sg2.end=dk;sg2.endCell=cell;}
       });
       if(sg2) segs.push(sg2);
-      var BAR_H=16,BAR_GAP=2,BAR_TOP=24;
+      var BAR_H=22,BAR_GAP=3,BAR_TOP=26;
       segs.forEach(function(sg,si){
         var r1=sg.startCell.getBoundingClientRect(),r2=sg.endCell.getBoundingClientRect();
         var slot=stackCount[sg.start]||0;
@@ -6387,6 +6413,12 @@ window.sCalNav=function(dir){
     if(sCalM<0){sCalM=11;sCalY--;}
     if(sCalM>11){sCalM=0;sCalY++;}
   }
+  sCalRender();
+};
+window.sCalNavJump=function(val,kind){
+  var n=parseInt(val,10); if(isNaN(n)) return;
+  if(kind==='m') sCalM=n;
+  else if(kind==='y') sCalY=n;
   sCalRender();
 };
 
@@ -6558,10 +6590,16 @@ function makeTrackerCal(cfg){
     var tk=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
     var title=f.toLocaleString('default',{month:'long',year:'numeric'});
 
+    var monthOpts=['January','February','March','April','May','June','July','August','September','October','November','December']
+      .map(function(mn,mi){return '<option value="'+mi+'"'+(mi===m?' selected':'')+'>'+mn+'</option>';}).join('');
+    var nowYr=new Date().getFullYear();
+    var yrOpts='';
+    for(var yi=nowYr-10; yi<=nowYr+5; yi++){ yrOpts += '<option value="'+yi+'"'+(yi===y?' selected':'')+'>'+yi+'</option>'; }
     var h='<div class="cal-nav">'
       +'<button class="cal-arr" onclick="'+cfg.navFn+'(-1)">&#9664;</button>'
       +'<button class="cal-arr" onclick="'+cfg.navFn+'(1)">&#9654;</button>'
-      +'<div class="cal-title">'+title+'</div>'
+      +'<select class="cal-jump" onchange="'+cfg.navFn+'Jump(this.value,\'m\')" title="Jump to month">'+monthOpts+'</select>'
+      +'<select class="cal-jump" onchange="'+cfg.navFn+'Jump(this.value,\'y\')" title="Jump to year">'+yrOpts+'</select>'
       +'<div class="pill-group" style="margin-left:auto"><button class="pill-btn active" onclick="'+cfg.navFn+'(0)">Today</button></div>'
       +'</div>'
       +'<div class="cal-mwrap"><div class="cal-m-dr">'
@@ -6624,7 +6662,7 @@ function makeTrackerCal(cfg){
           else{sg2.end=dk;sg2.endCell=cell;}
         });
         if(sg2) segs.push(sg2);
-        var BAR_H=16,BAR_GAP=2,BAR_TOP=24;
+        var BAR_H=22,BAR_GAP=3,BAR_TOP=26;
         segs.forEach(function(sg,si){
           var r1=sg.startCell.getBoundingClientRect(),r2=sg.endCell.getBoundingClientRect();
           var slot=stackCount[sg.start]||0;
@@ -6660,7 +6698,7 @@ function makeTrackerCal(cfg){
       emojiSts.forEach(function(s){
         var t=cfg.allTypesFn().find(function(x){return x.id===s.type;}); if(!t) return;
         var span=document.createElement('span');
-        span.style.cssText='font-size:1rem;line-height:1;filter:drop-shadow(0 1px 1px #0003);';
+        span.style.cssText='font-size:1.25rem;line-height:1;filter:drop-shadow(0 1px 1px #0003);';
         span.textContent=t.icon;
         span.title=t.label;
         row.appendChild(span);
@@ -6753,6 +6791,12 @@ window.pCalNav=function(dir){
   else{pCalState.m+=dir;if(pCalState.m<0){pCalState.m=11;pCalState.y--;}if(pCalState.m>11){pCalState.m=0;pCalState.y++;}}
   pCalRender(); setTimeout(dsMiniCal,20);
 };
+window.pCalNavJump=function(val,kind){
+  var n=parseInt(val,10); if(isNaN(n)) return;
+  if(kind==='m') pCalState.m=n;
+  else if(kind==='y') pCalState.y=n;
+  pCalRender(); setTimeout(dsMiniCal,20);
+};
 
 // ── Mental health calendar ──
 var mCalState={y:new Date().getFullYear(),m:new Date().getMonth()};
@@ -6768,6 +6812,12 @@ window._trCfg_['dmApply'] = {
   saveF: dmSave, renderF: function(){ mCalRender(); setTimeout(dsMiniCal,20); }
 };
 
+window.mCalNavJump=function(val,kind){
+  var n=parseInt(val,10); if(isNaN(n)) return;
+  if(kind==='m') mCalState.m=n;
+  else if(kind==='y') mCalState.y=n;
+  mCalRender(); setTimeout(dsMiniCal,20);
+};
 window.mCalNav=function(dir){
   if(dir===0){mCalState.y=new Date().getFullYear();mCalState.m=new Date().getMonth();}
   else{mCalState.m+=dir;if(mCalState.m<0){mCalState.m=11;mCalState.y--;}if(mCalState.m>11){mCalState.m=0;mCalState.y++;}}
@@ -6880,19 +6930,26 @@ function fitMonthGrid(gridId){
   var cells=grid.querySelectorAll('.cal-m-cell').length;
   var rows=Math.ceil(cells/7);
   if(!rows) return;
-  // Measure panel height from the outer container
+  // Account for ALL chrome above the wrap (header, user-bar, calendar tabs row)
+  var headerEl=document.querySelector('header');
+  var userBarEl=document.querySelector('.user-bar');
+  var tabsEl=document.querySelector('.cal-tabs');
+  var topH=(headerEl?headerEl.offsetHeight:0)+(userBarEl?userBarEl.offsetHeight:0)+(tabsEl?tabsEl.offsetHeight:0);
+  // Prefer measured panel height when available — that already excludes the chrome above it
   var panel=wrap.closest('.cal-tab-panel')||wrap.closest('[id$="Main"]')||wrap.parentElement;
   var panelH=panel?panel.clientHeight:0;
-  // Fallback: compute from viewport minus chrome
-  var headerEl=document.querySelector('header');
-  var tabsEl=document.querySelector('.cal-tabs');
-  var topH=(headerEl?headerEl.offsetHeight:50)+(tabsEl?tabsEl.offsetHeight:36);
-  var vpAvail=window.innerHeight-topH-navH-drH-18;
-  // Use the larger of measured panel height and viewport-based calc
   var panelAvail=panelH>0?panelH-navH-drH:0;
-  var available=Math.max(panelAvail, vpAvail);
-  if(available<80) return;
-  var rowH=Math.max(90, Math.floor(available/rows));
+  var vpAvail=window.innerHeight-topH-navH-drH-4; // small safety margin
+  // Use the smaller of measured panel and viewport calc — whichever fits without overflow
+  var available;
+  if(panelAvail>0) available=Math.min(panelAvail, vpAvail);
+  else available=vpAvail;
+  if(available<60) return;
+  // Row height = exact divide (floor) so the grid never exceeds available space.
+  // Lower minimum (60px) so calendar still fits on shorter viewports without clipping.
+  var rowH=Math.max(60, Math.floor(available/rows));
+  // If even the min would overflow, drop below it rather than clip
+  if(rowH*rows>available) rowH=Math.floor(available/rows);
   grid.style.gridTemplateRows='repeat('+rows+','+rowH+'px)';
 }
 
@@ -7016,17 +7073,6 @@ window.showStatusTally=function(){
   renderStatusTally();
   document.getElementById('statusTallyModal').style.display='flex';
 };
-window.showPeriodTally=function(){
-  _populateYearSel('dpYrSel');
-  renderPeriodTally();
-  document.getElementById('periodTallyModal').style.display='flex';
-};
-window.showMentalTally=function(){
-  _populateYearSel('dmYrSel');
-  renderMentalTally();
-  document.getElementById('mentalTallyModal').style.display='flex';
-};
-
 function _tallyRenderInto(elId, allTypesFn, getDataFn, year, useFY){
   var el=document.getElementById(elId); if(!el) return;
   var allTypes=allTypesFn(); var counts={},hrs={};
@@ -7057,19 +7103,6 @@ function _tallyRenderInto(elId, allTypesFn, getDataFn, year, useFY){
       +'<div class="tally-card-hrs">days</div></div></div>';
   }).join('');
 }
-window.renderPeriodTally=function(){
-  var yrSel=document.getElementById('dpYrSel');
-  var year=yrSel?parseInt(yrSel.value):new Date().getFullYear();
-  var useFY=document.getElementById('dpFY')&&document.getElementById('dpFY').classList.contains('on');
-  _tallyRenderInto('dpTallyGrid', dpAllTypes, function(){return dp.data;}, year, useFY);
-};
-window.renderMentalTally=function(){
-  var yrSel=document.getElementById('dmYrSel');
-  var year=yrSel?parseInt(yrSel.value):new Date().getFullYear();
-  var useFY=document.getElementById('dmFY')&&document.getElementById('dmFY').classList.contains('on');
-  _tallyRenderInto('dmTallyGrid', dmAllTypes, function(){return dm.data;}, year, useFY);
-};
-
 // Unified print: scope = 'status' | 'period' | 'mental' | 'combined'
 window.tallyPrint=function(scope, yrSelId, fyId){
   var yrSel=document.getElementById(yrSelId);
@@ -7139,8 +7172,7 @@ window.tallyPrint=function(scope, yrSelId, fyId){
   if(!win){ alert('Please allow pop-ups so the print preview can open.'); return; }
   win.document.write(html);
   win.document.close();
-  // Auto-trigger print preview after the new window finishes loading
-  setTimeout(function(){ try{ win.focus(); win.print(); }catch(e){} }, 400);
+  // Don't auto-trigger print — user clicks the in-window Print button when ready
 };
 
 window.renderStatusTally=function(){
@@ -7211,50 +7243,9 @@ window.addEventListener('resize', function(){
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
       <select id="stYrSel" onchange="renderStatusTally()" style="font-size:.72rem;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 10px;cursor:pointer"></select>
       <label class="print-opt-toggle" id="stFY" onclick="this.classList.toggle('on');renderStatusTally()" style="font-size:.65rem;cursor:pointer">📅 Financial Year</label>
-      <div style="display:flex;gap:6px;margin-left:auto;flex-wrap:wrap">
-        <button class="icon-btn" onclick="tallyPrint('status','stYrSel','stFY')" style="font-size:.7rem;padding:5px 12px;">🖨️ Print</button>
-        <button class="icon-btn" onclick="tallyPrint('combined','stYrSel','stFY')" style="font-size:.7rem;padding:5px 12px;">🖨️ Combined</button>
-      </div>
+      <button class="icon-btn" onclick="tallyPrint('status','stYrSel','stFY')" style="font-size:.7rem;padding:5px 12px;margin-left:auto;">🖨️ Print</button>
     </div>
     <div class="tally-grid" id="stTallyGrid"></div>
-  </div>
-</div>
-
-<!-- Period Tally Modal -->
-<div id="periodTallyModal" style="display:none;position:fixed;inset:0;background:#0008;z-index:700;align-items:center;justify-content:center;padding:20px;">
-  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;width:500px;max-width:95vw;max-height:88vh;overflow-y:auto;">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
-      <h2 style="font-size:1rem;font-weight:700;color:var(--accent);margin:0;font-family:'Fraunces',serif;">🌸 Period Tally</h2>
-      <button onclick="document.getElementById('periodTallyModal').style.display='none'" style="background:none;border:none;color:var(--text-muted);font-size:1.3rem;cursor:pointer;">✕</button>
-    </div>
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
-      <select id="dpYrSel" onchange="renderPeriodTally()" style="font-size:.72rem;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 10px;cursor:pointer"></select>
-      <label class="print-opt-toggle" id="dpFY" onclick="this.classList.toggle('on');renderPeriodTally()" style="font-size:.65rem;cursor:pointer">📅 Financial Year</label>
-      <div style="display:flex;gap:6px;margin-left:auto;flex-wrap:wrap">
-        <button class="icon-btn" onclick="tallyPrint('period','dpYrSel','dpFY')" style="font-size:.7rem;padding:5px 12px;">🖨️ Print</button>
-        <button class="icon-btn" onclick="tallyPrint('combined','dpYrSel','dpFY')" style="font-size:.7rem;padding:5px 12px;">🖨️ Combined</button>
-      </div>
-    </div>
-    <div class="tally-grid" id="dpTallyGrid"></div>
-  </div>
-</div>
-
-<!-- Wellbeing Tally Modal -->
-<div id="mentalTallyModal" style="display:none;position:fixed;inset:0;background:#0008;z-index:700;align-items:center;justify-content:center;padding:20px;">
-  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;width:500px;max-width:95vw;max-height:88vh;overflow-y:auto;">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
-      <h2 style="font-size:1rem;font-weight:700;color:var(--accent);margin:0;font-family:'Fraunces',serif;">🧠 Wellbeing Tally</h2>
-      <button onclick="document.getElementById('mentalTallyModal').style.display='none'" style="background:none;border:none;color:var(--text-muted);font-size:1.3rem;cursor:pointer;">✕</button>
-    </div>
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
-      <select id="dmYrSel" onchange="renderMentalTally()" style="font-size:.72rem;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 10px;cursor:pointer"></select>
-      <label class="print-opt-toggle" id="dmFY" onclick="this.classList.toggle('on');renderMentalTally()" style="font-size:.65rem;cursor:pointer">📅 Financial Year</label>
-      <div style="display:flex;gap:6px;margin-left:auto;flex-wrap:wrap">
-        <button class="icon-btn" onclick="tallyPrint('mental','dmYrSel','dmFY')" style="font-size:.7rem;padding:5px 12px;">🖨️ Print</button>
-        <button class="icon-btn" onclick="tallyPrint('combined','dmYrSel','dmFY')" style="font-size:.7rem;padding:5px 12px;">🖨️ Combined</button>
-      </div>
-    </div>
-    <div class="tally-grid" id="dmTallyGrid"></div>
   </div>
 </div>
 
