@@ -295,7 +295,15 @@ header {
   padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 30px;
+}
+.sidebar-section {
+  padding-bottom: 12px;
+  border-bottom: 1px dashed var(--border);
+}
+.sidebar-section:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
 }
 .sidebar-section h3 {
   font-size: 0.67rem;
@@ -1007,6 +1015,17 @@ input[type=time]::-webkit-datetime-edit-ampm-field { display: none !important; }
 .cal-jump{background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'DM Mono',monospace;font-size:.75rem;padding:5px 10px;border-radius:7px;cursor:pointer;transition:all .15s;}
 .cal-jump:hover{border-color:var(--accent);}
 .cal-jump:focus{outline:none;border-color:var(--accent);}
+.day-toggle-btn{
+  background:var(--surface2);border:1.5px solid var(--border);color:var(--text-muted);
+  font-family:'DM Mono',monospace;font-size:.72rem;font-weight:700;
+  padding:6px 12px;border-radius:6px;cursor:pointer;transition:all .15s;
+  letter-spacing:.04em;
+}
+.day-toggle-btn:hover{border-color:var(--accent);color:var(--text);}
+.day-toggle-btn.on{
+  background:color-mix(in srgb,var(--accent) 18%,var(--surface));
+  border-color:var(--accent);color:var(--accent);
+}
 .cal-mwrap{flex:1;overflow:auto;}
 .cal-m-dr{display:grid;grid-template-columns:repeat(7,1fr);position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--border);}
 .cal-m-dh{text-align:center;padding:8px 4px;font-size:.64rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1.5px;}
@@ -2136,7 +2155,7 @@ body { display: flex; flex-direction: column; height: 100vh; }
       <div class="sidebar-section">
         <h3>Templates</h3>
         <div id="sidebarTemplateList" style="display:flex;flex-direction:column;gap:5px;margin-bottom:6px"></div>
-        <button class="icon-btn" style="width:100%;font-size:0.7rem;padding:6px" onclick="openTemplatesModal()">⚙ Manage Templates</button>
+        <button class="icon-btn" style="width:100%;font-size:0.7rem;padding:6px" onclick="openTemplatesModal()">＋ Templates</button>
       </div>
 
       <div class="sidebar-section">
@@ -2341,7 +2360,15 @@ body { display: flex; flex-direction: column; height: 100vh; }
 
       <!-- Hidden selectors kept for dsTally() compat -->
       <div style="display:none"><select id="dsTallyYrSel"></select><label id="dsTallyFY"></label><div id="dsTally"></div></div>
-      <div class="sidebar-section"><h3>Upcoming</h3><div id="cUpList"></div></div>
+      <!-- Navigate to a specific month/year (drives the active tab's calendar) -->
+      <div class="sidebar-section" id="sidebarNavTo">
+        <h3>Navigate to</h3>
+        <div style="display:flex;gap:6px">
+          <select id="navToMonth" class="form-input" style="flex:1;font-size:.78rem" onchange="navToJump()"></select>
+          <select id="navToYear"  class="form-input" style="flex:1;font-size:.78rem" onchange="navToJump()"></select>
+        </div>
+      </div>
+      <div class="sidebar-section" id="sidebarUpcoming"><h3>Upcoming</h3><div id="cUpList"></div></div>
     </div>
     <div style="flex:1;display:flex;flex-direction:column;overflow:hidden">
   <div class="cal-tab-panel active" id="calPanelCal">
@@ -2408,7 +2435,11 @@ body { display: flex; flex-direction: column; height: 100vh; }
       <div class="form-row" style="flex:1"><label>Start Date</label><input class="form-input" id="cEvDate" type="date"></div>
       <div class="form-row" style="flex:1"><label>End Date</label><input class="form-input" id="cEvDateEnd" type="date"></div>
     </div>
-    <div class="form-row"><label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="cEvAD" onchange="cTogAD(this.checked)"> All day</label></div>
+    <div class="form-row">
+      <label>All day</label>
+      <button type="button" id="cEvAdBtn" class="day-toggle-btn" onclick="cToggleAD()" style="align-self:flex-start">All day</button>
+      <input type="checkbox" id="cEvAD" style="display:none">
+    </div>
     <div id="cEvTmRow" style="display:flex;gap:8px">
       <div class="form-row" style="flex:1"><label>Start Time</label><input class="form-input" id="cEvSt" type="time" value="09:00"></div>
       <div class="form-row" style="flex:1"><label>End Time</label><input class="form-input" id="cEvEn" type="time" value="10:00"></div>
@@ -2424,14 +2455,14 @@ body { display: flex; flex-direction: column; height: 100vh; }
       </select>
     </div>
     <div class="form-row" id="cEvRecurDaysRow" style="display:none"><label>Repeat on</label>
-      <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:2px">
-        <label style="font-size:.7rem;display:flex;align-items:center;gap:3px;cursor:pointer;text-transform:none;letter-spacing:0;font-weight:400"><input type="checkbox" class="cEvRecurDay" value="1"> Mon</label>
-        <label style="font-size:.7rem;display:flex;align-items:center;gap:3px;cursor:pointer;text-transform:none;letter-spacing:0;font-weight:400"><input type="checkbox" class="cEvRecurDay" value="2"> Tue</label>
-        <label style="font-size:.7rem;display:flex;align-items:center;gap:3px;cursor:pointer;text-transform:none;letter-spacing:0;font-weight:400"><input type="checkbox" class="cEvRecurDay" value="3"> Wed</label>
-        <label style="font-size:.7rem;display:flex;align-items:center;gap:3px;cursor:pointer;text-transform:none;letter-spacing:0;font-weight:400"><input type="checkbox" class="cEvRecurDay" value="4"> Thu</label>
-        <label style="font-size:.7rem;display:flex;align-items:center;gap:3px;cursor:pointer;text-transform:none;letter-spacing:0;font-weight:400"><input type="checkbox" class="cEvRecurDay" value="5"> Fri</label>
-        <label style="font-size:.7rem;display:flex;align-items:center;gap:3px;cursor:pointer;text-transform:none;letter-spacing:0;font-weight:400"><input type="checkbox" class="cEvRecurDay" value="6"> Sat</label>
-        <label style="font-size:.7rem;display:flex;align-items:center;gap:3px;cursor:pointer;text-transform:none;letter-spacing:0;font-weight:400"><input type="checkbox" class="cEvRecurDay" value="0"> Sun</label>
+      <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:2px" id="cEvRecurDaysBtns">
+        <button type="button" class="day-toggle-btn cEvRecurDay" data-day="1" onclick="cToggleDay(this)">Mon</button>
+        <button type="button" class="day-toggle-btn cEvRecurDay" data-day="2" onclick="cToggleDay(this)">Tue</button>
+        <button type="button" class="day-toggle-btn cEvRecurDay" data-day="3" onclick="cToggleDay(this)">Wed</button>
+        <button type="button" class="day-toggle-btn cEvRecurDay" data-day="4" onclick="cToggleDay(this)">Thu</button>
+        <button type="button" class="day-toggle-btn cEvRecurDay" data-day="5" onclick="cToggleDay(this)">Fri</button>
+        <button type="button" class="day-toggle-btn cEvRecurDay" data-day="6" onclick="cToggleDay(this)">Sat</button>
+        <button type="button" class="day-toggle-btn cEvRecurDay" data-day="0" onclick="cToggleDay(this)">Sun</button>
       </div>
     </div>
     <div class="form-row" id="cEvRecurEndRow" style="display:none"><label>Repeat until</label>
@@ -2625,7 +2656,11 @@ body { display: flex; flex-direction: column; height: 100vh; }
     <div id="templateList" style="margin-bottom:16px"></div>
     <div style="border-top:1px solid var(--border);padding-top:14px">
       <p style="font-size:0.7rem;color:var(--text-muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px">New Template</p>
-      <div class="form-row"><label>Label</label><input class="form-input" id="tplLabel" placeholder="e.g. Morning Run" maxlength="30"></div>
+      <div class="form-row"><label>Block Label</label><input class="form-input" id="tplLabel" placeholder="e.g. Morning Run" maxlength="30"></div>
+      <div class="form-row"><label>Icon</label>
+        <div class="emoji-keyboard-wrap"><div class="emoji-trigger" id="tplIconTrigger" onclick="openEmojiKeyboard('tplIcon')"><span class="trigger-icon" id="tplIconPreview">&#9203;</span><span class="trigger-label">Choose emoji&#8230;</span></div><div class="emoji-keyboard" id="tplIconEmojiKeyboard"></div></div></div>
+      <div class="form-row"><label>Colour</label>
+        <div class="emoji-keyboard-wrap"><div class="emoji-trigger" id="tplColorTrigger" onclick="openColorKeyboard('tplColor')"><span class="trigger-icon" id="tplColorPreview" style="width:18px;height:18px;border-radius:4px;background:#c8b8ff;display:inline-block;flex-shrink:0"></span><span class="trigger-label">Choose colour&#8230;</span></div><div class="color-keyboard" id="tplColorColorKeyboard"></div></div></div>
       <div class="form-row">
         <label>Duration</label>
         <div class="pill-group" style="display:flex;width:100%">
@@ -2633,10 +2668,6 @@ body { display: flex; flex-direction: column; height: 100vh; }
           <button class="pill-btn" id="tplDur60btn" onclick="setTplDuration(60)" style="flex:1">1 hour</button>
         </div>
       </div>
-      <div class="form-row"><label>Icon</label>
-        <div class="emoji-keyboard-wrap"><div class="emoji-trigger" id="tplIconTrigger" onclick="openEmojiKeyboard('tplIcon')"><span class="trigger-icon" id="tplIconPreview">&#9203;</span><span class="trigger-label">Choose emoji&#8230;</span></div><div class="emoji-keyboard" id="tplIconEmojiKeyboard"></div></div></div>
-      <div class="form-row"><label>Colour</label>
-        <div class="emoji-keyboard-wrap"><div class="emoji-trigger" id="tplColorTrigger" onclick="openColorKeyboard('tplColor')"><span class="trigger-icon" id="tplColorPreview" style="width:18px;height:18px;border-radius:4px;background:#c8b8ff;display:inline-block;flex-shrink:0"></span><span class="trigger-label">Choose colour&#8230;</span></div><div class="color-keyboard" id="tplColorColorKeyboard"></div></div></div>
       <div class="modal-btns">
         <button class="btn-cancel" onclick="closeModal('templatesModal')">Close</button>
         <button class="btn-primary" onclick="saveTemplate()">Save Template</button>
@@ -4745,14 +4776,7 @@ function cViewToggle(){
 function cRMonth(){
   var M=cG('cMain');if(!M)return;
   var y=cSt.y,m=cSt.m,f=new Date(y,m,1),l=new Date(y,m+1,0),sd=(f.getDay()+6)%7,tot=Math.ceil((sd+l.getDate())/7)*7,tk=cDk(cNow);
-  var monthOpts=['January','February','March','April','May','June','July','August','September','October','November','December']
-    .map(function(mn,mi){return '<option value="'+mi+'"'+(mi===m?' selected':'')+'>'+mn+'</option>';}).join('');
-  var nowYr=new Date().getFullYear();
-  var yrOpts='';
-  for(var yi=nowYr-10; yi<=nowYr+5; yi++){ yrOpts += '<option value="'+yi+'"'+(yi===y?' selected':'')+'>'+yi+'</option>'; }
   var h='<div class="cal-nav"><button class="cal-arr" onclick="cMn(-1)">&#9664;</button><button class="cal-arr" onclick="cMn(1)">&#9654;</button>'
-    +'<select class="cal-jump" onchange="cMnJump(this.value,\'m\')" title="Jump to month">'+monthOpts+'</select>'
-    +'<select class="cal-jump" onchange="cMnJump(this.value,\'y\')" title="Jump to year">'+yrOpts+'</select>'
     +'<div class="cal-title">'+f.toLocaleString('default',{month:'long',year:'numeric'})+'</div>'
     +cViewToggle()+'</div><div class="cal-mwrap"><div class="cal-m-dr">'+['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(function(d){return'<div class="cal-m-dh">'+d+'</div>';}).join('')+'</div><div class="cal-m-grid">';
   for(var i=0;i<tot;i++){
@@ -4766,7 +4790,7 @@ function cRMonth(){
   cInjectEventBars(M, y, m, f, l, sd);
   setTimeout(fitAllMonthGrids,0);
 }
-window.cMn=function(d){var m=cSt.m+d,y=cSt.y;if(m<0){m=11;y--;}if(m>11){m=0;y++;}cSt.m=m;cSt.y=y;cSt.my=y;cSt.mm=m;cRa();};
+window.cMn=function(d){var m=cSt.m+d,y=cSt.y;if(m<0){m=11;y--;}if(m>11){m=0;y++;}cSt.m=m;cSt.y=y;cSt.my=y;cSt.mm=m;cRa(); if(typeof navToSync==='function') navToSync();};
 window.cMnJump=function(val,kind){var n=parseInt(val,10); if(isNaN(n)) return; if(kind==='m'){cSt.m=n;cSt.mm=n;} else if(kind==='y'){cSt.y=n;cSt.my=n;} cRa();};
 window.cGoDay=function(dk2){
   // Status tab routes the click to dsApply; if status didn't intercept, open the new-event modal for this date.
@@ -4930,10 +4954,10 @@ function cOpenAdd(pd,pt){
     if(pt){ en.value=cP2(parseInt(pt.split(':')[0])+1)+':00'; }
     else  { en.value='10:00'; }
   }
-  var ad=cG('cEvAD'); if(ad){ ad.checked=false; cTogAD(false); }
+  cTogAD(false);
   var rec=cG('cEvRecur'); if(rec){ rec.value=''; cTogRecur(''); }
   var recEnd=cG('cEvRecurEnd'); if(recEnd) recEnd.value='';
-  document.querySelectorAll('.cEvRecurDay').forEach(function(cb){cb.checked=false;});
+  document.querySelectorAll('.cEvRecurDay').forEach(function(b){b.classList.remove('on');});
   var nt=cG('cEvNote'); if(nt) nt.value='';
   var del=cG('cEvDelBtn'); if(del) del.style.display='none';
   cSyncT();
@@ -4954,11 +4978,12 @@ window.cOe=function(id){
   var de=cG('cEvDateEnd'); if(de) de.value=e.dateEnd||'';
   var st=cG('cEvSt'); if(st) st.value=e.st||'09:00';
   var en=cG('cEvEn'); if(en) en.value=e.en||'10:00';
-  var ad=cG('cEvAD'); if(ad){ad.checked=!!e.allDay; cTogAD(!!e.allDay);}
+  cTogAD(!!e.allDay);
   var rec=cG('cEvRecur'); if(rec){ rec.value=e.recur||''; cTogRecur(e.recur||''); }
   var recEnd=cG('cEvRecurEnd'); if(recEnd) recEnd.value=e.recurEnd||'';
-  document.querySelectorAll('.cEvRecurDay').forEach(function(cb){
-    cb.checked=!!(e.recurDays&&e.recurDays.indexOf(parseInt(cb.value))!==-1);
+  document.querySelectorAll('.cEvRecurDay').forEach(function(b){
+    var on=!!(e.recurDays&&e.recurDays.indexOf(parseInt(b.dataset.day))!==-1);
+    b.classList.toggle('on',on);
   });
   var nt=cG('cEvNote'); if(nt) nt.value=e.note||'';
   var del=cG('cEvDelBtn'); if(del) del.style.display='';
@@ -4966,7 +4991,19 @@ window.cOe=function(id){
   cG('cEvModal').classList.add('open');
 };
 
-window.cTogAD=function(c){var r=cG('cEvTmRow'); if(r) r.style.display=c?'none':'';};
+window.cTogAD=function(c){
+  var r=cG('cEvTmRow'); if(r) r.style.display=c?'none':'';
+  var btn=cG('cEvAdBtn'); if(btn) btn.classList.toggle('on',!!c);
+  var cb=cG('cEvAD'); if(cb) cb.checked=!!c;
+};
+window.cToggleAD=function(){
+  var cb=cG('cEvAD'); if(!cb) return;
+  cb.checked=!cb.checked;
+  cTogAD(cb.checked);
+};
+window.cToggleDay=function(btn){
+  btn.classList.toggle('on');
+};
 window.cTogRecur=function(v){
   var endRow=cG('cEvRecurEndRow'); if(endRow) endRow.style.display=v?'':'none';
   var daysRow=cG('cEvRecurDaysRow'); if(daysRow) daysRow.style.display=(v==='weekly'||v==='biweekly')?'':'none';
@@ -4981,7 +5018,7 @@ window.cSaveEv=function(){
   var recurEnd=cG('cEvRecurEnd')?cG('cEvRecurEnd').value:'';
   var recurDays=[];
   if(recur==='weekly'||recur==='biweekly'){
-    document.querySelectorAll('.cEvRecurDay:checked').forEach(function(cb){recurDays.push(parseInt(cb.value));});
+    document.querySelectorAll('.cEvRecurDay.on').forEach(function(b){recurDays.push(parseInt(b.dataset.day));});
   }
   var e={
     id:cSt.eid||'ev'+Date.now(),
@@ -6285,16 +6322,9 @@ function sCalRender(){
   var tk=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
   var title=f.toLocaleString('default',{month:'long',year:'numeric'});
 
-  var monthOpts=['January','February','March','April','May','June','July','August','September','October','November','December']
-    .map(function(mn,mi){return '<option value="'+mi+'"'+(mi===m?' selected':'')+'>'+mn+'</option>';}).join('');
-  var nowYr=new Date().getFullYear();
-  var yrOpts='';
-  for(var yi=nowYr-10; yi<=nowYr+5; yi++){ yrOpts += '<option value="'+yi+'"'+(yi===y?' selected':'')+'>'+yi+'</option>'; }
   var h='<div class="cal-nav">'
     +'<button class="cal-arr" onclick="sCalNav(-1)">&#9664;</button>'
     +'<button class="cal-arr" onclick="sCalNav(1)">&#9654;</button>'
-    +'<select class="cal-jump" onchange="sCalNavJump(this.value,\'m\')" title="Jump to month">'+monthOpts+'</select>'
-    +'<select class="cal-jump" onchange="sCalNavJump(this.value,\'y\')" title="Jump to year">'+yrOpts+'</select>'
     +'<div class="cal-title">'+f.toLocaleString('default',{month:'long',year:'numeric'})+'</div>'
     +'<div class="pill-group" style="margin-left:auto"><button class="pill-btn active" onclick="sCalNav(0)">Today</button></div>'
     +'</div>'
@@ -6442,6 +6472,7 @@ window.sCalNav=function(dir){
     if(sCalM>11){sCalM=0;sCalY++;}
   }
   sCalRender();
+  if(typeof navToSync==='function') navToSync();
 };
 window.sCalNavJump=function(val,kind){
   var n=parseInt(val,10); if(isNaN(n)) return;
@@ -6618,16 +6649,9 @@ function makeTrackerCal(cfg){
     var tk=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
     var title=f.toLocaleString('default',{month:'long',year:'numeric'});
 
-    var monthOpts=['January','February','March','April','May','June','July','August','September','October','November','December']
-      .map(function(mn,mi){return '<option value="'+mi+'"'+(mi===m?' selected':'')+'>'+mn+'</option>';}).join('');
-    var nowYr=new Date().getFullYear();
-    var yrOpts='';
-    for(var yi=nowYr-10; yi<=nowYr+5; yi++){ yrOpts += '<option value="'+yi+'"'+(yi===y?' selected':'')+'>'+yi+'</option>'; }
     var h='<div class="cal-nav">'
       +'<button class="cal-arr" onclick="'+cfg.navFn+'(-1)">&#9664;</button>'
       +'<button class="cal-arr" onclick="'+cfg.navFn+'(1)">&#9654;</button>'
-      +'<select class="cal-jump" onchange="'+cfg.navFn+'Jump(this.value,\'m\')" title="Jump to month">'+monthOpts+'</select>'
-      +'<select class="cal-jump" onchange="'+cfg.navFn+'Jump(this.value,\'y\')" title="Jump to year">'+yrOpts+'</select>'
       +'<div class="cal-title">'+title+'</div>'
       +'<div class="pill-group" style="margin-left:auto"><button class="pill-btn active" onclick="'+cfg.navFn+'(0)">Today</button></div>'
       +'</div>'
@@ -6819,6 +6843,7 @@ window.pCalNav=function(dir){
   if(dir===0){pCalState.y=new Date().getFullYear();pCalState.m=new Date().getMonth();}
   else{pCalState.m+=dir;if(pCalState.m<0){pCalState.m=11;pCalState.y--;}if(pCalState.m>11){pCalState.m=0;pCalState.y++;}}
   pCalRender(); setTimeout(dsMiniCal,20);
+  if(typeof navToSync==='function') navToSync();
 };
 window.pCalNavJump=function(val,kind){
   var n=parseInt(val,10); if(isNaN(n)) return;
@@ -6851,6 +6876,7 @@ window.mCalNav=function(dir){
   if(dir===0){mCalState.y=new Date().getFullYear();mCalState.m=new Date().getMonth();}
   else{mCalState.m+=dir;if(mCalState.m<0){mCalState.m=11;mCalState.y--;}if(mCalState.m>11){mCalState.m=0;mCalState.y++;}}
   mCalRender(); setTimeout(dsMiniCal,20);
+  if(typeof navToSync==='function') navToSync();
 };
 
 // ── Tally functions ──
@@ -7026,7 +7052,59 @@ window.calSwitchTab=function(tab){
   // Mini-cal: visible on Events + Status; hidden on Period + Wellbeing
   var mc=document.getElementById('sidebarMiniCal');
   if(mc) mc.style.display=(tab==='cal'||tab==='status')?'':'none';
+  // Upcoming events: only on Events tab
+  var up=document.getElementById('sidebarUpcoming');
+  if(up) up.style.display=(tab==='cal')?'':'none';
+  // Sync the Navigate-to selectors to the active tab's current month/year
+  navToSync();
   setTimeout(dsMiniCal,20);
+};
+
+// Get/set the current calendar tab's month and year (single source of truth for Navigate-to)
+function _activeCalTab(){
+  var b=document.querySelector('.cal-tab-btn.active');
+  return b?b.id:'';
+}
+function _getActiveCalMY(){
+  var t=_activeCalTab();
+  if(t==='calTabStatus') return {y:sCalY,m:sCalM};
+  if(t==='calTabPeriod') return {y:pCalState.y,m:pCalState.m};
+  if(t==='calTabMental') return {y:mCalState.y,m:mCalState.m};
+  return {y:cSt.y,m:cSt.m};
+}
+function _setActiveCalMY(y,m){
+  var t=_activeCalTab();
+  if(t==='calTabStatus'){ sCalY=y; sCalM=m; sCalRender(); }
+  else if(t==='calTabPeriod'){ pCalState.y=y; pCalState.m=m; pCalRender(); }
+  else if(t==='calTabMental'){ mCalState.y=y; mCalState.m=m; mCalRender(); }
+  else { cSt.y=y; cSt.m=m; cSt.my=y; cSt.mm=m; cRa(); }
+  setTimeout(dsMiniCal,20);
+}
+window.navToSync=function(){
+  var mEl=document.getElementById('navToMonth');
+  var yEl=document.getElementById('navToYear');
+  if(!mEl||!yEl) return;
+  var cur=_getActiveCalMY();
+  if(!mEl.options.length){
+    var months=['January','February','March','April','May','June','July','August','September','October','November','December'];
+    mEl.innerHTML=months.map(function(mn,i){return '<option value="'+i+'">'+mn+'</option>';}).join('');
+  }
+  var nowYr=new Date().getFullYear();
+  if(!yEl.options.length){
+    var ys='';
+    for(var yi=nowYr-10; yi<=nowYr+5; yi++){ ys += '<option value="'+yi+'">'+yi+'</option>'; }
+    yEl.innerHTML=ys;
+  }
+  mEl.value=String(cur.m);
+  yEl.value=String(cur.y);
+};
+window.navToJump=function(){
+  var mEl=document.getElementById('navToMonth');
+  var yEl=document.getElementById('navToYear');
+  if(!mEl||!yEl) return;
+  var m=parseInt(mEl.value,10), y=parseInt(yEl.value,10);
+  if(isNaN(m)||isNaN(y)) return;
+  _setActiveCalMY(y,m);
 };
 
 function allTallyRender(){
