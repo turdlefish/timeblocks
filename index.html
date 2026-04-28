@@ -7055,6 +7055,28 @@ window.calSwitchTab=function(tab){
   // Upcoming events: only on Events tab
   var up=document.getElementById('sidebarUpcoming');
   if(up) up.style.display=(tab==='cal')?'':'none';
+  // Place the Navigate-to section appropriate for each tab
+  var navTo=document.getElementById('sidebarNavTo');
+  if(navTo&&navTo.parentNode){
+    var parent=navTo.parentNode;
+    var ref=null;
+    if(tab==='status'){
+      // Under the mini calendar, before the Day Status selectors
+      ref=document.getElementById('sidebarDayStatus');
+    } else if(tab==='period'){
+      // Above the Period selectors
+      ref=document.getElementById('sidebarPeriod');
+    } else if(tab==='mental'){
+      // Above the Wellbeing selectors
+      ref=document.getElementById('sidebarMental');
+    } else {
+      // Events: keep above Upcoming (default position)
+      ref=document.getElementById('sidebarUpcoming');
+    }
+    if(ref&&ref.parentNode===parent&&navTo.nextSibling!==ref){
+      parent.insertBefore(navTo, ref);
+    }
+  }
   // Sync the Navigate-to selectors to the active tab's current month/year
   navToSync();
   setTimeout(dsMiniCal,20);
