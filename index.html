@@ -2,8 +2,16 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>TimeBlocks</title>
+<!-- PWA -->
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#0e0e11">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Timeblocks">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="icon" type="image/svg+xml" href="/icon-192.svg">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500;700&family=Fraunces:wght@900&display=swap" rel="stylesheet">
 <style>
 /* ── VARIABLES ── */
@@ -2880,16 +2888,79 @@ let isSaving = false;
 let lastSaved = { tasks: '', cats: '', sched: '', tpls: '' };
 let syncInterval = null, toastTimer = null;
 
-async function sbGet(key) {
+// ── Local cache + offline write queue ─────────────────────────
+// Wraps the Supabase reads/writes so the app loads from localStorage
+// instantly, survives connectivity drops, and queues failed writes for
+// automatic flush on reconnect. `auth:*` keys bypass the cache entirely
+// — login must always be authoritative against the server.
+
+const TB_CACHE_PREFIX = 'tb_cache:';
+const TB_QUEUE_KEY    = 'tb_queue';
+const TB_SCHEMA_KEY   = 'tb_cache_schema';
+const TB_SCHEMA_VER   = '1';
+
+function cacheGet(key) {
+  try { return localStorage.getItem(TB_CACHE_PREFIX + key); }
+  catch(e) { return null; }
+}
+function cacheSet(key, valueStr) {
+  try { localStorage.setItem(TB_CACHE_PREFIX + key, valueStr); }
+  catch(e) { /* QuotaExceededError etc — silently drop */ }
+}
+function cacheRemove(key) {
+  try { localStorage.removeItem(TB_CACHE_PREFIX + key); } catch(e) {}
+}
+function cacheClearAll() {
+  try {
+    const ks = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && (k.indexOf(TB_CACHE_PREFIX) === 0 || k === TB_QUEUE_KEY)) ks.push(k);
+    }
+    ks.forEach(k => localStorage.removeItem(k));
+  } catch(e) {}
+}
+function queueRead() {
+  try { return JSON.parse(localStorage.getItem(TB_QUEUE_KEY) || '{}'); }
+  catch(e) { return {}; }
+}
+function queueWrite(q) {
+  try { localStorage.setItem(TB_QUEUE_KEY, JSON.stringify(q)); } catch(e) {}
+}
+function queueAdd(key, value) {
+  const q = queueRead();
+  q[key] = { value, ts: Date.now() };
+  queueWrite(q);
+}
+function queueRemove(key) {
+  const q = queueRead();
+  if (key in q) { delete q[key]; queueWrite(q); }
+}
+function queueSize() { return Object.keys(queueRead()).length; }
+
+// Schema-version pin: bump TB_SCHEMA_VER if the cache layout ever
+// changes incompatibly, and stale data gets wiped on next load.
+(function checkCacheSchema() {
+  try {
+    const cur = localStorage.getItem(TB_SCHEMA_KEY);
+    if (cur !== TB_SCHEMA_VER) {
+      cacheClearAll();
+      localStorage.setItem(TB_SCHEMA_KEY, TB_SCHEMA_VER);
+    }
+  } catch(e) {}
+})();
+
+// Underlying network primitives (no cache, no queue). Used directly by
+// flushQueue and indirectly by sbGet/sbSet below.
+async function sbGetNet(key) {
   const r = await fetch(`${SB_URL}/rest/v1/tb_store?key=eq.${encodeURIComponent(key)}&select=value`, {
     headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}` }
   });
-  if (!r.ok) return null;
+  if (!r.ok) throw new Error('sbGet HTTP ' + r.status);
   const rows = await r.json();
   return rows.length ? rows[0].value : null;
 }
-
-async function sbSet(key, value) {
+async function sbSetNet(key, value) {
   const payload = JSON.stringify({ key, value, updated_at: new Date().toISOString() });
   const headers = {
     'apikey': SB_KEY,
@@ -2903,6 +2974,100 @@ async function sbSet(key, value) {
     throw new Error('sbSet failed (' + res.status + '): ' + err);
   }
   return true;
+}
+
+// sbGet: network-first, cache-fallback.
+// MUST NOT throw — `loadFromStorage` and `pollUpdates` use Promise.all,
+// and a single rejection would skip the entire tick. Returns the
+// cached string verbatim on any failure (preserves byte-identity for
+// pollUpdates' string-diff against lastSaved.*).
+async function sbGet(key) {
+  const isAuth = typeof key === 'string' && key.indexOf('auth:') === 0;
+  if (isAuth) return await sbGetNet(key);
+  // Fast-path when we know we're offline — skip the network timeout.
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+    return cacheGet(key);
+  }
+  try {
+    const v = await sbGetNet(key);
+    if (v !== null) {
+      cacheSet(key, typeof v === 'string' ? v : JSON.stringify(v));
+    }
+    return v;
+  } catch(e) {
+    return cacheGet(key);
+  }
+}
+
+// sbSet: write-through cache + offline write queue.
+async function sbSet(key, value) {
+  const isAuth = typeof key === 'string' && key.indexOf('auth:') === 0;
+  if (isAuth) return await sbSetNet(key, value);
+  // Cache first — synchronous, never blocks the UI.
+  cacheSet(key, typeof value === 'string' ? value : JSON.stringify(value));
+  // Skip the network attempt entirely when offline.
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+    queueAdd(key, value);
+    refreshSyncIndicator();
+    return true;
+  }
+  try {
+    await sbSetNet(key, value);
+    queueRemove(key);
+    refreshSyncIndicator();
+    return true;
+  } catch(e) {
+    queueAdd(key, value);
+    refreshSyncIndicator();
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) return true;
+    throw e;
+  }
+}
+
+// flushQueue: replay buffered writes once we're back online. Guarded
+// by `isFlushing` because pollUpdates also calls it every 1.5s and a
+// slow flush could otherwise overlap and double-POST.
+let isFlushing = false;
+async function flushQueue() {
+  if (isFlushing) return 0;
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) return 0;
+  const q = queueRead();
+  const keys = Object.keys(q);
+  if (!keys.length) return 0;
+  isFlushing = true;
+  let flushed = 0;
+  try {
+    for (const k of keys) {
+      try {
+        await sbSetNet(k, q[k].value);
+        queueRemove(k);
+        flushed++;
+      } catch(e) { break; /* connectivity flaky — try again next tick */ }
+    }
+  } finally {
+    isFlushing = false;
+    refreshSyncIndicator();
+  }
+  return flushed;
+}
+
+// Apply offline / queued indicator state. When online with an empty
+// queue we stamp 'live' so a recovery from offline visibly lands.
+// We deliberately defer to saveToStorage when isSaving is true — its
+// 'saving…' label should not be clobbered mid-flight.
+function refreshSyncIndicator() {
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+    setSyncing('offline'); return;
+  }
+  const n = queueSize();
+  if (n > 0) { setSyncing('queued', n); return; }
+  if (typeof isSaving !== 'undefined' && isSaving) return;
+  setSyncing('live');
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('online',  function(){ flushQueue(); refreshSyncIndicator(); });
+  window.addEventListener('offline', function(){ refreshSyncIndicator(); });
 }
 
 function wsKey(k) { return authUser ? (authUser.ws + ':' + k) : k; }
@@ -2951,20 +3116,46 @@ async function saveToStorage() {
 }
 
 async function loadFromStorage() {
+  // 1. Synchronous hydrate from localStorage cache so first paint is
+  //    instant (no waiting for the network round-trip).
+  let hydrated = false;
+  try {
+    const cTasks = cacheGet(wsKey('tasks'));
+    const cCats  = cacheGet(wsKey('cats'));
+    const cSched = cacheGet(wsKey('sched'));
+    const cTpls  = cacheGet(wsKey('tpls'));
+    if (cCats)  { try { appState.categories = JSON.parse(cCats);  lastSaved.cats  = cCats;  hydrated = true; } catch(e){} }
+    if (cTasks) { try { appState.tasks      = JSON.parse(cTasks); lastSaved.tasks = cTasks; hydrated = true; } catch(e){} }
+    if (cSched) { try { const s = JSON.parse(cSched); if (s.tables?.length) { appState.tables = s.tables; lastSaved.sched = cSched; hydrated = true; } } catch(e){} }
+    if (cTpls)  { try { appState.templates  = JSON.parse(cTpls);  lastSaved.tpls  = cTpls;  hydrated = true; } catch(e){} }
+  } catch(e) {}
+
+  // 2. Network refresh — string-diff against lastSaved.* (now seeded
+  //    from cache) so we only re-assign when the server has newer data.
   try {
     const [tasksVal, catsVal, schedVal, tplsVal] = await Promise.all([
       sbGet(wsKey('tasks')), sbGet(wsKey('cats')), sbGet(wsKey('sched')), sbGet(wsKey('tpls'))
     ]);
-    if (catsVal)  { appState.categories = JSON.parse(catsVal);  lastSaved.cats  = catsVal; }
-    if (tasksVal) { appState.tasks      = JSON.parse(tasksVal); lastSaved.tasks = tasksVal; }
-    if (schedVal) { const s = JSON.parse(schedVal); if (s.tables?.length) appState.tables = s.tables; lastSaved.sched = schedVal; }
-    if (tplsVal)  { appState.templates  = JSON.parse(tplsVal);  lastSaved.tpls  = tplsVal; }
+    if (catsVal  && catsVal  !== lastSaved.cats)  { appState.categories = JSON.parse(catsVal);  lastSaved.cats  = catsVal; }
+    if (tasksVal && tasksVal !== lastSaved.tasks) { appState.tasks      = JSON.parse(tasksVal); lastSaved.tasks = tasksVal; }
+    if (schedVal && schedVal !== lastSaved.sched) { const s = JSON.parse(schedVal); if (s.tables?.length) appState.tables = s.tables; lastSaved.sched = schedVal; }
+    if (tplsVal  && tplsVal  !== lastSaved.tpls)  { appState.templates  = JSON.parse(tplsVal);  lastSaved.tpls  = tplsVal; }
     if (!appState.categories.length) seedDefaults();
-  } catch(e) { seedDefaults(); }
+  } catch(e) { if (!hydrated) seedDefaults(); }
 }
 
 async function pollUpdates() {
   if (isSaving) return;
+  // Best-effort flush of any writes that queued up while offline. Runs
+  // every 1.5 s so a reconnect is reflected within one poll tick. The
+  // function self-guards with isFlushing so overlap is safe.
+  flushQueue();
+  // If we're offline or have queued writes, surface that in the
+  // indicator before/after the poll.
+  if ((typeof navigator !== 'undefined' && navigator.onLine === false) || queueSize() > 0) {
+    refreshSyncIndicator();
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) return;
+  }
   try {
     const [tasksVal, catsVal, schedVal, tplsVal] = await Promise.all([
       sbGet(wsKey('tasks')), sbGet(wsKey('cats')), sbGet(wsKey('sched')), sbGet(wsKey('tpls'))
@@ -2991,7 +3182,13 @@ async function pollUpdates() {
     }
     await updatePresence();
     await renderPresence();
-    setSyncing('live');
+    // Only stamp 'live' if there's nothing pending — otherwise let
+    // refreshSyncIndicator's 'queued (N)' label stand.
+    if (queueSize() === 0 && (typeof navigator === 'undefined' || navigator.onLine !== false)) {
+      setSyncing('live');
+    } else {
+      refreshSyncIndicator();
+    }
   } catch(e) { setSyncing('error'); }
 }
 
@@ -3024,12 +3221,22 @@ async function renderPresence() {
     ).join('');
   } catch(e) {}
 }
-function setSyncing(s) {
+function setSyncing(s, n) {
   const dot = document.getElementById('syncDot');
   const txt = document.getElementById('syncText');
   if (!dot||!txt) return;
-  dot.className = 'sync-dot' + (s==='saving'?' saving':s==='error'?' error':'');
-  txt.textContent = s==='saving'?'saving…':s==='error'?'offline':'live';
+  // Visual states: dot is 'saving' (pulse) for in-flight work, 'error'
+  // (red) for true errors, 'offline' (red) when network is gone, plain
+  // (green) for live or queued-but-replaying.
+  let cls = '';
+  if (s==='saving' || s==='queued') cls = ' saving';
+  else if (s==='error' || s==='offline') cls = ' error';
+  dot.className = 'sync-dot' + cls;
+  if (s==='saving')      txt.textContent = 'saving…';
+  else if (s==='error')  txt.textContent = 'sync error';
+  else if (s==='offline')txt.textContent = n ? `offline (${n})` : 'offline';
+  else if (s==='queued') txt.textContent = n ? `queued (${n})` : 'queued';
+  else                   txt.textContent = 'live';
 }
 
 function seedDefaults() {
@@ -4628,6 +4835,10 @@ async function authSubmit() {
 }
 
 function authLogout() {
+  // Wipe per-user cached data + queued writes so the next user (or a
+  // re-login as the same user) starts clean — prevents leaking one
+  // workspace's data into another's session on a shared device.
+  try { cacheClearAll(); } catch(e) {}
   localStorage.removeItem('tb_session');
   location.reload();
 }
@@ -4659,7 +4870,16 @@ async function initApp() {
   syncInterval = setInterval(pollUpdates, 1500);
   setInterval(updatePresence, 10000);
   updatePresence();
-  setSyncing('live');
+  // Flush any writes that queued up before this session started or
+  // before the SW activated — typical case is a hard reload after
+  // making offline edits.
+  flushQueue();
+  // Stamp the indicator: 'live' if clean, otherwise reflect queue/offline.
+  if (queueSize() === 0 && (typeof navigator === 'undefined' || navigator.onLine !== false)) {
+    setSyncing('live');
+  } else {
+    refreshSyncIndicator();
+  }
 }
 
 async function init() {
@@ -7469,5 +7689,14 @@ window.addEventListener('resize', function(){
 
 <!-- ── MOBILE FAB ── -->
 <button class="mob-fab" id="mobFab" onclick="mobFabAction()" aria-label="Add">＋</button>
+
+<!-- ── PWA: Service Worker registration ── -->
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function() {
+      navigator.serviceWorker.register('/service-worker.js').catch(function(){});
+    });
+  }
+</script>
 </body>
 </html>
